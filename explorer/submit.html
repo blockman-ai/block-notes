@@ -4,10 +4,6 @@
   <meta charset="UTF-8">
   <title>Submit a Block Note</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-  <!-- Bitcoin Connect SDK -->
-  <script src="https://unpkg.com/@bitcoinconnect/browser"></script>
-
   <style>
     body {
       background: #fdfaf5;
@@ -78,10 +74,11 @@
       white-space: pre-wrap;
     }
 
-    #walletAddress {
+    #footer-note {
       font-size: 0.9em;
-      margin-top: 10px;
-      color: #666;
+      text-align: center;
+      margin: 40px auto;
+      color: #999;
     }
   </style>
 </head>
@@ -89,9 +86,7 @@
 
   <div class="hero">
     <h1>Write to the Chain</h1>
-    <p>Submit your message to a block. Make it eternal.</p>
-    <button id="connectBtn" onclick="connectWallet()">Connect Wallet</button>
-    <p id="walletAddress"></p>
+    <p>Leave your message tied to a Bitcoin block. Make it eternal.</p>
   </div>
 
   <div class="container">
@@ -101,85 +96,50 @@
     <label for="message">Your Message:</label>
     <textarea id="message" rows="4" placeholder="What do you want to inscribe?"></textarea>
 
+    <label for="name">Your Name or Wallet (optional):</label>
+    <input type="text" id="name" placeholder="@blockman-ai or bc1q...">
+
     <button onclick="generatePreview()">Generate Note</button>
     <button onclick="inscribeWithUnisat()">Inscribe with UniSat</button>
 
     <div class="preview" id="preview" style="display:none;"></div>
   </div>
 
+  <div id="footer-note">
+    Don’t have a wallet? Use <a href="https://unisat.io" target="_blank">UniSat</a> or <a href="https://xverse.app" target="_blank">Xverse</a> to get started.
+  </div>
+
   <script>
-  const { getProvider, setProviders } = window.BitcoinConnect;
+    function generatePreview() {
+      const block = document.getElementById('block').value.trim();
+      const message = document.getElementById('message').value.trim();
+      const name = document.getElementById('name').value.trim() || "@anonymous";
 
-  let address = "";
-
-  // Wait for wallets to load before initializing
-  window.addEventListener("load", () => {
-    const availableProviders = [];
-
-    if (window.xverseBitcoinProvider) {
-      availableProviders.push({
-        id: "xverse",
-        name: "Xverse",
-        provider: window.xverseBitcoinProvider
-      });
-    }
-
-    if (window.unisat) {
-      availableProviders.push({
-        id: "unisat",
-        name: "UniSat",
-        provider: window.unisat
-      });
-    }
-
-    setProviders(availableProviders);
-  });
-
-  async function connectWallet() {
-    try {
-      const provider = await getProvider();
-
-      if (!provider) {
-        alert("No supported Bitcoin wallet found.");
+      if (!block || !message) {
+        alert("Please enter both a block number and a message.");
         return;
       }
 
-      const accounts = await provider.requestAccounts();
-      address = accounts[0];
-      document.getElementById("walletAddress").innerText = `Connected: ${address}`;
-    } catch (err) {
-      console.error("Wallet connection failed:", err);
-      alert("Wallet connection failed. Make sure you have Xverse or UniSat installed.");
-    }
-  }
-
-  function generatePreview() {
-    const block = document.getElementById('block').value.trim();
-    const message = document.getElementById('message').value.trim();
-    const tag = address || "@blockman-ai";
-
-    if (!block || !message) {
-      alert("Fill in both block number and message.");
-      return;
+      const preview = `block-note:${block}\n"${message}" – ${name}`;
+      document.getElementById('preview').style.display = 'block';
+      document.getElementById('preview').innerText = preview;
     }
 
-    const preview = `block-note:${block}\n"${message}" – ${tag}`;
-    document.getElementById('preview').style.display = 'block';
-    document.getElementById('preview').innerText = preview;
-  }
+    function inscribeWithUnisat() {
+      const block = document.getElementById('block').value.trim();
+      const message = document.getElementById('message').value.trim();
+      const name = document.getElementById('name').value.trim() || "@anonymous";
 
-  function inscribeWithUnisat() {
-    const block = document.getElementById('block').value.trim();
-    const message = document.getElementById('message').value.trim();
-    const tag = address || "@blockman-ai";
+      if (!block || !message) {
+        alert("Please enter both a block number and a message.");
+        return;
+      }
 
-    if (!block || !message) {
-      alert("Please fill in both block number and message.");
-      return;
+      const text = encodeURIComponent(`block-note:${block}\n"${message}" – ${name}`);
+      const link = `https://unisat.io/inscribe?type=text&data=${text}`;
+      window.open(link, "_blank");
     }
+  </script>
 
-    const text = encodeURIComponent(`block-note:${block}\n"${message}" – ${tag}`);
-    const link = `https://unisat.io/inscribe?type=text&data=${text}`;
-    window.open(link, "_blank");
-  }
-</script>
+</body>
+</html>
