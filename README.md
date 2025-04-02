@@ -35,3 +35,4 @@ Paste this inside:
     "inscription": "example123456789abcdef"
   }
 }
+https://github.com/blockman-ai/block-notes/issues/new?template=submit-note.md
