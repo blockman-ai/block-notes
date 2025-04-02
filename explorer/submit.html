@@ -1,115 +1,152 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Submit a Block Note</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Block Note Submission</title>
 
   <style>
+    :root {
+      --bg: #0e0e0e;
+      --fg: #fff;
+      --accent: #ffcc00;
+      --muted: #999;
+      --input-bg: #1e1e1e;
+    }
+
     body {
-      background: #fdfaf5;
-      font-family: Georgia, serif;
       margin: 0;
-      padding: 0;
-      color: #333;
+      font-family: "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--fg);
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
     }
 
-    .hero {
+    header {
       text-align: center;
-      padding: 50px 20px;
-      background: #1a1a1a;
-      color: #fff;
+      padding: 40px 20px;
+      background: #111;
+      border-bottom: 1px solid #222;
     }
 
-    .hero h1 {
-      font-size: 2.5em;
-      margin-bottom: 10px;
+    header h1 {
+      font-size: 2.4em;
+      margin-bottom: 0.3em;
+      color: var(--accent);
     }
 
-    .hero p {
-      font-size: 1.2em;
-      color: #ccc;
+    header p {
+      font-size: 1.1em;
+      color: var(--muted);
     }
 
-    .container {
-      max-width: 600px;
+    main {
+      flex: 1;
+      max-width: 500px;
       margin: 40px auto;
       padding: 0 20px;
     }
 
     label {
       font-weight: bold;
-      margin-top: 20px;
+      margin: 20px 0 8px;
       display: block;
     }
 
     input, textarea {
       width: 100%;
       padding: 12px;
-      margin-top: 8px;
-      margin-bottom: 20px;
-      border: 1px solid #ccc;
       font-size: 1em;
-      font-family: inherit;
+      border: 1px solid #333;
+      border-radius: 6px;
+      background: var(--input-bg);
+      color: var(--fg);
+      outline: none;
+    }
+
+    input:focus, textarea:focus {
+      border-color: var(--accent);
+    }
+
+    .buttons {
+      margin-top: 20px;
     }
 
     button {
       padding: 12px 20px;
       font-size: 1em;
-      background: #111;
-      color: #fff;
-      border: none;
-      cursor: pointer;
       margin-right: 10px;
+      border: none;
+      border-radius: 6px;
+      background: var(--accent);
+      color: #000;
+      cursor: pointer;
+      transition: background 0.2s;
     }
 
     button:hover {
-      background: #333;
+      background: #e6b800;
     }
 
     .preview {
-      background: #fffbea;
-      padding: 20px;
-      margin-top: 20px;
+      margin-top: 30px;
+      background: #1a1a1a;
+      padding: 16px;
+      border-radius: 6px;
       font-family: monospace;
       white-space: pre-wrap;
+      border: 1px solid #333;
     }
 
-    #footer-note {
-      font-size: 0.9em;
+    footer {
       text-align: center;
-      margin: 40px auto;
-      color: #999;
+      font-size: 0.9em;
+      padding: 20px;
+      color: var(--muted);
+    }
+
+    a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
     }
   </style>
 </head>
 <body>
 
-  <div class="hero">
-    <h1>Write to the Chain</h1>
-    <p>Leave a message tied to a Bitcoin block — make it eternal.</p>
-  </div>
+  <header>
+    <h1>Block Notes</h1>
+    <p>Inscribe a message forever on Bitcoin — one block at a time.</p>
+  </header>
 
-  <div class="container">
-    <label for="block">Block Number:</label>
-    <input type="text" id="block" placeholder="e.g. 840420">
+  <main>
+    <label for="block">Block Number</label>
+    <input type="text" id="block" placeholder="e.g. 840420"/>
 
-    <label for="message">Your Message:</label>
-    <textarea id="message" rows="4" placeholder="What do you want to inscribe?"></textarea>
+    <label for="message">Message</label>
+    <textarea id="message" rows="4" placeholder="Say something eternal..."></textarea>
 
-    <label for="tag">Your Name or Wallet (optional):</label>
-    <input type="text" id="tag" placeholder="@blockman-ai or bc1q...">
+    <label for="tag">Name or Wallet (optional)</label>
+    <input type="text" id="tag" placeholder="@blockman-ai or bc1q..."/>
 
-    <button onclick="generatePreview()">Generate Note</button>
-    <button onclick="inscribeWithUnisat()">Inscribe with UniSat</button>
+    <div class="buttons">
+      <button onclick="generatePreview()">Preview</button>
+      <button onclick="inscribeWithUnisat()">Inscribe with UniSat</button>
+    </div>
 
     <div class="preview" id="preview" style="display:none;"></div>
-  </div>
+  </main>
 
-  <div id="footer-note">
-    No wallet connection needed. Just inscribe directly.  
-    Get started with <a href="https://unisat.io" target="_blank">UniSat</a> or <a href="https://xverse.app" target="_blank">Xverse</a>.
-  </div>
+  <footer>
+    Powered by Bitcoin. No login. No middlemen. Just forever.  
+    <br/>
+    Wallet: <a href="https://unisat.io" target="_blank">UniSat</a> or <a href="https://xverse.app" target="_blank">Xverse</a>
+  </footer>
 
   <script>
     function generatePreview() {
@@ -118,7 +155,7 @@
       const tag = document.getElementById('tag').value.trim() || "@anonymous";
 
       if (!block || !message) {
-        alert("Please enter both a block number and a message.");
+        alert("Please fill in both the block number and message.");
         return;
       }
 
@@ -133,7 +170,7 @@
       const tag = document.getElementById('tag').value.trim() || "@anonymous";
 
       if (!block || !message) {
-        alert("Please enter both a block number and a message.");
+        alert("Please fill in both the block number and message.");
         return;
       }
 
