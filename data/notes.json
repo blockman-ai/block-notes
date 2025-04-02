@@ -6,5 +6,37 @@
   "840001": {
     "message": "One block. One truth. Nothing can erase it. – @blockman-ai",
     "inscription": "a1c2d3e4f5b6c7d8e9f0123456789abcdef0123456789abcdef0123456789abcd"
+  },
+  "840002": {
+    "message": "Blocks don’t lie. People do. – @blockman-ai",
+    "inscription": "b3e2d6a7f9c8b1e4a0d1234567890abcdef0123456789abcdef0123456789abcd"
+  },
+  "840003": {
+    "message": "Each block is a testimony. – @blockman-ai",
+    "inscription": "c4f5a6b7d8e9f0123456789abcdef0123456789abcdef0123456789abcdef0123"
+  },
+  "840004": {
+    "message": "Bitcoin remembers what the world forgets. – @blockman-ai",
+    "inscription": "d1f2e3c4b5a697887766554433221100ffeeddccbbaa99887766554433221100"
+  },
+  "840005": {
+    "message": "Code is law. Block is truth. – @blockman-ai",
+    "inscription": "abcde1234567890abcdef1234567890abcdef1234567890abcdef1234567890"
+  },
+  "840006": {
+    "message": "Forever is now written in Bitcoin. – @blockman-ai",
+    "inscription": "9876fedcba0987654321fedcba0987654321fedcba0987654321fedcba098765"
+  },
+  "840007": {
+    "message": "No edits. No delete. Only truth. – @blockman-ai",
+    "inscription": "fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210"
+  },
+  "840008": {
+    "message": "We speak in hashes. We build in blocks. – @blockman-ai",
+    "inscription": "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
+  },
+  "840009": {
+    "message": "This message is immortal. – @blockman-ai",
+    "inscription": "deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"
   }
 }
