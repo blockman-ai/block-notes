@@ -37,6 +37,7 @@
       justify-content: center;
       gap: 20px;
       margin-top: 30px;
+      flex-wrap: wrap;
     }
 
     .links a {
@@ -114,77 +115,4 @@
 
   <header>
     <h1>Block Notes</h1>
-    <p>Write forever messages to Bitcoin. Immutable. Unstoppable. Yours.</p>
-    <div class="links">
-      <a href="./explorer/submit.html">Inscribe a Note</a>
-      <a href="./explorer/">Explore Notes</a>
-      <a href="https://github.com/blockman-ai/block-notes" target="_blank">GitHub</a>
-    </div>
-  </header>
-
-  <main>
-    <div class="stats">
-      <h2>Live Stats</h2>
-      <p><strong>Total Notes:</strong> <span id="totalNotes">...</span></p>
-      <p><strong>Unique Authors:</strong> <span id="uniqueAuthors">...</span></p>
-      <p><strong>Latest Block:</strong> <span id="latestBlock">...</span></p>
-    </div>
-
-    <h2 style="color:#ffcc00;">Latest Notes</h2>
-    <div id="latestNotes">
-      <p>Loading latest notes...</p>
-    </div>
-  </main>
-
-  <footer>
-    Built with Bitcoin. Maintained by @blockman-ai. Powered by truth.
-  </footer>
-
-  <script>
-    async function loadNotes() {
-      try {
-        const res = await fetch("explorer/notes.json");
-        const data = await res.json();
-
-        const total = Object.keys(data).length;
-        const blocks = Object.keys(data).map(Number);
-        const latestBlock = Math.max(...blocks);
-
-        const authors = new Set();
-        Object.values(data).forEach(note => {
-          const match = note.message.match(/–\s(@[\w-]+|bc1\w+)/);
-          if (match) authors.add(match[1]);
-        });
-
-        document.getElementById("totalNotes").innerText = total;
-        document.getElementById("latestBlock").innerText = latestBlock;
-        document.getElementById("uniqueAuthors").innerText = authors.size;
-
-        const sorted = Object.entries(data).sort((a, b) => b[0] - a[0]);
-        const recent = sorted.slice(0, 5);
-
-        const container = document.getElementById("latestNotes");
-        container.innerHTML = "";
-
-        for (const [block, note] of recent) {
-          const div = document.createElement("div");
-          div.className = "note";
-          div.innerHTML = `
-            <h3>Block ${block}</h3>
-            <p>${note.message}</p>
-            <a href="https://ordinals.com/inscription/${note.inscription}" target="_blank">View Inscription</a>
-          `;
-          container.appendChild(div);
-        }
-
-      } catch (err) {
-        console.error(err);
-        document.getElementById("latestNotes").innerHTML = `<p style="color:red;">Error loading notes.json</p>`;
-      }
-    }
-
-    loadNotes();
-  </script>
-
-</body>
-</html>
+    <p>Write forever messages to Bitcoin
