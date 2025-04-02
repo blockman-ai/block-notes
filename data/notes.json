@@ -8,3 +8,13 @@
     "inscription": "example123456789abcdef"
   }
 }
+,
+"840002": {
+  "message": "This is a fresh Block Note from the people. – @yourname",
+  "inscription": "your_real_inscription_id_here"
+}
+,
+"840002": {
+  "message": "I left my mark on this chain. – @blockfan",
+  "inscription": "abc1234567890abcdef"
+}
