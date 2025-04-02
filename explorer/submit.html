@@ -108,67 +108,78 @@
   </div>
 
   <script>
-    const { getProvider, setProviders } = window.BitcoinConnect;
+  const { getProvider, setProviders } = window.BitcoinConnect;
 
-    let address = "";
+  let address = "";
 
-    setProviders([
-      {
+  // Wait for wallets to load before initializing
+  window.addEventListener("load", () => {
+    const availableProviders = [];
+
+    if (window.xverseBitcoinProvider) {
+      availableProviders.push({
         id: "xverse",
         name: "Xverse",
-        provider: window.xverseBitcoinProvider,
-      },
-      {
+        provider: window.xverseBitcoinProvider
+      });
+    }
+
+    if (window.unisat) {
+      availableProviders.push({
         id: "unisat",
         name: "UniSat",
-        provider: window.unisat,
-      }
-    ]);
-
-    async function connectWallet() {
-      try {
-        const provider = await getProvider();
-        const accounts = await provider.requestAccounts();
-        address = accounts[0];
-
-        document.getElementById("walletAddress").innerText = `Connected: ${address}`;
-      } catch (err) {
-        alert("Wallet connection failed");
-        console.error(err);
-      }
+        provider: window.unisat
+      });
     }
 
-    function generatePreview() {
-      const block = document.getElementById('block').value.trim();
-      const message = document.getElementById('message').value.trim();
+    setProviders(availableProviders);
+  });
 
-      if (!block || !message) {
-        alert("Fill in both block number and message.");
+  async function connectWallet() {
+    try {
+      const provider = await getProvider();
+
+      if (!provider) {
+        alert("No supported Bitcoin wallet found.");
         return;
       }
 
-      const preview = `block-note:${block}\n"${message}" – ${address || "@blockman-ai"}`;
+      const accounts = await provider.requestAccounts();
+      address = accounts[0];
+      document.getElementById("walletAddress").innerText = `Connected: ${address}`;
+    } catch (err) {
+      console.error("Wallet connection failed:", err);
+      alert("Wallet connection failed. Make sure you have Xverse or UniSat installed.");
+    }
+  }
 
-      document.getElementById('preview').style.display = 'block';
-      document.getElementById('preview').innerText = preview;
+  function generatePreview() {
+    const block = document.getElementById('block').value.trim();
+    const message = document.getElementById('message').value.trim();
+    const tag = address || "@blockman-ai";
+
+    if (!block || !message) {
+      alert("Fill in both block number and message.");
+      return;
     }
 
-    function inscribeWithUnisat() {
-      const block = document.getElementById('block').value.trim();
-      const message = document.getElementById('message').value.trim();
-      const tag = address || "@blockman-ai";
+    const preview = `block-note:${block}\n"${message}" – ${tag}`;
+    document.getElementById('preview').style.display = 'block';
+    document.getElementById('preview').innerText = preview;
+  }
 
-      if (!block || !message) {
-        alert("Please fill in both block number and message.");
-        return;
-      }
+  function inscribeWithUnisat() {
+    const block = document.getElementById('block').value.trim();
+    const message = document.getElementById('message').value.trim();
+    const tag = address || "@blockman-ai";
 
-      const text = encodeURIComponent(`block-note:${block}\n"${message}" – ${tag}`);
-      const link = `https://unisat.io/inscribe?type=text&data=${text}`;
-
-      window.open(link, "_blank");
+    if (!block || !message) {
+      alert("Please fill in both block number and message.");
+      return;
     }
-  </script>
 
-</body>
-</html>
+    const text = encodeURIComponent(`block-note:${block}\n"${message}" – ${tag}`);
+    const link = `https://unisat.io/inscribe?type=text&data=${text}`;
+    window.open(link, "_blank");
+  }
+</script>
