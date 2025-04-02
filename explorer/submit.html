@@ -4,6 +4,10 @@
   <meta charset="UTF-8">
   <title>Submit a Block Note</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Bitcoin Connect SDK -->
+  <script src="https://unpkg.com/@bitcoinconnect/browser"></script>
+
   <style>
     body {
       background: #fdfaf5;
@@ -59,6 +63,7 @@
       color: #fff;
       border: none;
       cursor: pointer;
+      margin-right: 10px;
     }
 
     button:hover {
@@ -72,6 +77,12 @@
       font-family: monospace;
       white-space: pre-wrap;
     }
+
+    #walletAddress {
+      font-size: 0.9em;
+      margin-top: 10px;
+      color: #666;
+    }
   </style>
 </head>
 <body>
@@ -79,6 +90,8 @@
   <div class="hero">
     <h1>Write to the Chain</h1>
     <p>Submit your message to a block. Make it eternal.</p>
+    <button id="connectBtn" onclick="connectWallet()">Connect Wallet</button>
+    <p id="walletAddress"></p>
   </div>
 
   <div class="container">
@@ -89,11 +102,42 @@
     <textarea id="message" rows="4" placeholder="What do you want to inscribe?"></textarea>
 
     <button onclick="generatePreview()">Generate Note</button>
+    <button onclick="inscribeWithUnisat()">Inscribe with UniSat</button>
 
     <div class="preview" id="preview" style="display:none;"></div>
   </div>
 
   <script>
+    const { getProvider, setProviders } = window.BitcoinConnect;
+
+    let address = "";
+
+    setProviders([
+      {
+        id: "xverse",
+        name: "Xverse",
+        provider: window.xverseBitcoinProvider,
+      },
+      {
+        id: "unisat",
+        name: "UniSat",
+        provider: window.unisat,
+      }
+    ]);
+
+    async function connectWallet() {
+      try {
+        const provider = await getProvider();
+        const accounts = await provider.requestAccounts();
+        address = accounts[0];
+
+        document.getElementById("walletAddress").innerText = `Connected: ${address}`;
+      } catch (err) {
+        alert("Wallet connection failed");
+        console.error(err);
+      }
+    }
+
     function generatePreview() {
       const block = document.getElementById('block').value.trim();
       const message = document.getElementById('message').value.trim();
@@ -103,44 +147,28 @@
         return;
       }
 
-      const preview = `block-note:${block}\n"${message}" – @blockman-ai`;
+      const preview = `block-note:${block}\n"${message}" – ${address || "@blockman-ai"}`;
 
       document.getElementById('preview').style.display = 'block';
       document.getElementById('preview').innerText = preview;
     }
+
+    function inscribeWithUnisat() {
+      const block = document.getElementById('block').value.trim();
+      const message = document.getElementById('message').value.trim();
+      const tag = address || "@blockman-ai";
+
+      if (!block || !message) {
+        alert("Please fill in both block number and message.");
+        return;
+      }
+
+      const text = encodeURIComponent(`block-note:${block}\n"${message}" – ${tag}`);
+      const link = `https://unisat.io/inscribe?type=text&data=${text}`;
+
+      window.open(link, "_blank");
+    }
   </script>
-<script>
-  function generatePreview() {
-    const block = document.getElementById('block').value.trim();
-    const message = document.getElementById('message').value.trim();
-
-    if (!block || !message) {
-      alert("Fill in both block number and message.");
-      return;
-    }
-
-    const preview = `block-note:${block}\n"${message}" – @blockman-ai`;
-
-    document.getElementById('preview').style.display = 'block';
-    document.getElementById('preview').innerText = preview;
-  }
-
-  function inscribeWithUnisat() {
-    const block = document.getElementById('block').value.trim();
-    const message = document.getElementById('message').value.trim();
-
-    if (!block || !message) {
-      alert("Please fill in both block number and message.");
-      return;
-    }
-
-    const text = encodeURIComponent(`block-note:${block}\n"${message}" – @blockman-ai`);
-    const link = `https://unisat.io/inscribe?type=text&data=${text}`;
-
-    window.open(link, "_blank");
-  }
-</script>
 
 </body>
 </html>
-<button onclick="inscribeWithUnisat()">Inscribe with UniSat</button>
