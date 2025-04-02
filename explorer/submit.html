@@ -102,6 +102,45 @@
     .manual-note a:hover {
       text-decoration: underline;
     }
+
+    #successModal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.85);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #successModal .modal-content {
+      background: #1b1b1b;
+      padding: 30px;
+      border-radius: 10px;
+      border: 1px solid #444;
+      text-align: center;
+      max-width: 90%;
+      width: 400px;
+    }
+
+    #successModal .modal-content h2 {
+      color: #ffcc00;
+      margin-bottom: 10px;
+    }
+
+    #successModal .modal-content p {
+      font-size: 0.9em;
+      color: #aaa;
+    }
+
+    #successModal .modal-content a {
+      color: #ffcc00;
+      word-break: break-all;
+    }
+
+    #successModal .modal-content button {
+      margin-top: 20px;
+    }
   </style>
 </head>
 <body>
@@ -133,6 +172,15 @@
       <a href="https://ordinalsbot.com" target="_blank">OrdinalsBot</a> as a text inscription.
     </p>
   </main>
+
+  <div id="successModal">
+    <div class="modal-content">
+      <h2>Inscription Submitted</h2>
+      <p>Your inscription was pushed to the Bitcoin network.</p>
+      <p id="txidLink"></p>
+      <button onclick="closeModal()">Close</button>
+    </div>
+  </div>
 
   <script>
     let address = "";
@@ -195,11 +243,20 @@
         const signedPsbt = await window.unisat.signPsbt(psbtHex, { autoFinalized: true });
         const txid = await window.unisat.pushPsbt(signedPsbt);
 
-        alert("Inscribe success! TXID:\n" + txid);
+        document.getElementById("txidLink").innerHTML = `
+          <strong>TXID:</strong><br>
+          <a href="https://mempool.space/tx/${txid}" target="_blank">${txid}</a>
+        `;
+        document.getElementById("successModal").style.display = "flex";
+
       } catch (err) {
         console.error("Inscription failed:", err);
         alert("Inscription failed. Check your wallet or try the fallback method.");
       }
+    }
+
+    function closeModal() {
+      document.getElementById("successModal").style.display = "none";
     }
 
     function copyInscription() {
