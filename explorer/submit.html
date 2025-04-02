@@ -58,7 +58,7 @@
     }
 
     button {
-      margin-top: 16px;
+      margin-top: 12px;
       padding: 12px 20px;
       font-size: 1em;
       background: #ffcc00;
@@ -87,6 +87,21 @@
       font-family: monospace;
       white-space: pre-wrap;
     }
+
+    .manual-note {
+      color: #888;
+      font-size: 0.9em;
+      margin-top: 16px;
+    }
+
+    .manual-note a {
+      color: #ffcc00;
+      text-decoration: none;
+    }
+
+    .manual-note a:hover {
+      text-decoration: underline;
+    }
   </style>
 </head>
 <body>
@@ -107,8 +122,16 @@
 
     <button onclick="generatePreview()">Preview Note</button>
     <button onclick="inscribeOnChain()">Inscribe On-Chain</button>
+    <button onclick="copyInscription()">Copy Inscription Text</button>
+    <button onclick="openUniSat()">Inscribe Manually on UniSat</button>
 
     <div class="preview" id="preview" style="display:none;"></div>
+
+    <p class="manual-note">
+      After copying, paste your inscription into
+      <a href="https://unisat.io/inscribe" target="_blank">UniSat</a> or
+      <a href="https://ordinalsbot.com" target="_blank">OrdinalsBot</a> as a text inscription.
+    </p>
   </main>
 
   <script>
@@ -175,8 +198,24 @@
         alert("Inscribe success! TXID:\n" + txid);
       } catch (err) {
         console.error("Inscription failed:", err);
-        alert("Inscription failed. Check your wallet and console.");
+        alert("Inscription failed. Check your wallet or try the fallback method.");
       }
+    }
+
+    function copyInscription() {
+      const preview = document.getElementById("preview").innerText;
+      if (!preview) {
+        alert("Generate a preview first.");
+        return;
+      }
+
+      navigator.clipboard.writeText(preview)
+        .then(() => alert("Inscription text copied to clipboard!"))
+        .catch(err => alert("Failed to copy. Try manually."));
+    }
+
+    function openUniSat() {
+      window.open("https://unisat.io/inscribe", "_blank");
     }
   </script>
 
