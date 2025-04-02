@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Block Notes Explorer</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      background: #f6f1e7;
+      font-family: Georgia, serif;
+      margin: 0;
+      padding: 0;
+    }
+    header {
+      background: #222;
+      color: #fff;
+      text-align: center;
+      padding: 20px;
+      font-size: 1.5em;
+      letter-spacing: 1px;
+    }
+    .note {
+      border-bottom: 1px solid #ddd;
+      padding: 20px;
+    }
+    .note h2 {
+      margin: 0 0 10px;
+    }
+    .note a {
+      color: #2e4c96;
+      text-decoration: none;
+    }
+    .note a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+
+  <header>Block Notes Explorer</header>
+
+  <div id="notes"></div>
+
+  <script>
+    fetch('../data/notes.json')
+      .then(response => response.json())
+      .then(data => {
+        const container = document.getElementById('notes');
+        Object.keys(data).sort((a, b) => b - a).forEach(block => {
+          const note = data[block];
+          const div = document.createElement('div');
+          div.className = 'note';
+          div.innerHTML = `
+            <h2>Block ${block}</h2>
+            <p>${note.message}</p>
+            <p><a href="https://ordinals.com/inscription/${note.inscription}" target="_blank">View Inscription</a></p>
+          `;
+          container.appendChild(div);
+        });
+      });
+  </script>
+
+</body>
+</html>
+
