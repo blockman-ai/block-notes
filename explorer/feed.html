@@ -21,9 +21,15 @@
     }
 
     header h1 {
-      font-size: 2.2em;
-      margin: 0;
+      font-size: 2.4em;
       color: #ffcc00;
+      margin: 0 0 10px;
+    }
+
+    header p {
+      color: #ccc;
+      font-size: 1em;
+      margin: 0;
     }
 
     .feed {
@@ -81,7 +87,7 @@
 
   <header>
     <h1>Blockstream Feed</h1>
-    <p style="color:#ccc;">A stream of forever messages inscribed to Bitcoin</p>
+    <p>A stream of forever messages inscribed to Bitcoin</p>
   </header>
 
   <div class="feed" id="feedContainer">
@@ -117,7 +123,8 @@
           container.appendChild(div);
         }
       } catch (err) {
-        document.getElementById("feedContainer").innerHTML = `<p style="color:red;">Failed to load feed</p>`;
+        document.getElementById("feedContainer").innerHTML = `<p style="color:red;">Failed to load notes.json</p>`;
+        console.error(err);
       }
     }
 
