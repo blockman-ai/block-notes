@@ -109,6 +109,39 @@
       document.getElementById('preview').innerText = preview;
     }
   </script>
+<script>
+  function generatePreview() {
+    const block = document.getElementById('block').value.trim();
+    const message = document.getElementById('message').value.trim();
+
+    if (!block || !message) {
+      alert("Fill in both block number and message.");
+      return;
+    }
+
+    const preview = `block-note:${block}\n"${message}" – @blockman-ai`;
+
+    document.getElementById('preview').style.display = 'block';
+    document.getElementById('preview').innerText = preview;
+  }
+
+  function inscribeWithUnisat() {
+    const block = document.getElementById('block').value.trim();
+    const message = document.getElementById('message').value.trim();
+
+    if (!block || !message) {
+      alert("Please fill in both block number and message.");
+      return;
+    }
+
+    const text = encodeURIComponent(`block-note:${block}\n"${message}" – @blockman-ai`);
+    const link = `https://unisat.io/inscribe?type=text&data=${text}`;
+
+    window.open(link, "_blank");
+  }
+</script>
 
 </body>
 </html>
+<button onclick="generatePreview()">Generate Note</button>
+<button onclick="inscribeWithUnisat()">Inscribe with UniSat</button>
