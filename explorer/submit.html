@@ -3,25 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Block Note Submission</title>
+  <title>Block Notes</title>
 
   <style>
-    :root {
-      --bg: #0e0e0e;
-      --fg: #fff;
-      --accent: #ffcc00;
-      --muted: #999;
-      --input-bg: #1e1e1e;
-    }
-
     body {
       margin: 0;
       font-family: "Segoe UI", sans-serif;
-      background: var(--bg);
-      color: var(--fg);
-      display: flex;
-      flex-direction: column;
-      min-height: 100vh;
+      background: #0f0f0f;
+      color: #fefefe;
     }
 
     header {
@@ -34,16 +23,15 @@
     header h1 {
       font-size: 2.4em;
       margin-bottom: 0.3em;
-      color: var(--accent);
+      color: #ffcc00;
     }
 
     header p {
       font-size: 1.1em;
-      color: var(--muted);
+      color: #999;
     }
 
     main {
-      flex: 1;
       max-width: 500px;
       margin: 40px auto;
       padding: 0 20px;
@@ -51,7 +39,7 @@
 
     label {
       font-weight: bold;
-      margin: 20px 0 8px;
+      margin: 16px 0 6px;
       display: block;
     }
 
@@ -59,61 +47,45 @@
       width: 100%;
       padding: 12px;
       font-size: 1em;
-      border: 1px solid #333;
+      border: 1px solid #444;
       border-radius: 6px;
-      background: var(--input-bg);
-      color: var(--fg);
-      outline: none;
+      background: #1e1e1e;
+      color: #fefefe;
     }
 
     input:focus, textarea:focus {
-      border-color: var(--accent);
-    }
-
-    .buttons {
-      margin-top: 20px;
+      border-color: #ffcc00;
     }
 
     button {
+      margin-top: 16px;
       padding: 12px 20px;
       font-size: 1em;
-      margin-right: 10px;
+      background: #ffcc00;
       border: none;
       border-radius: 6px;
-      background: var(--accent);
-      color: #000;
+      color: #111;
       cursor: pointer;
-      transition: background 0.2s;
     }
 
     button:hover {
       background: #e6b800;
     }
 
+    .address-bar {
+      margin-top: 10px;
+      font-size: 0.9em;
+      color: #888;
+    }
+
     .preview {
-      margin-top: 30px;
-      background: #1a1a1a;
+      margin-top: 24px;
+      background: #1b1b1b;
       padding: 16px;
       border-radius: 6px;
+      border: 1px solid #333;
       font-family: monospace;
       white-space: pre-wrap;
-      border: 1px solid #333;
-    }
-
-    footer {
-      text-align: center;
-      font-size: 0.9em;
-      padding: 20px;
-      color: var(--muted);
-    }
-
-    a {
-      color: var(--accent);
-      text-decoration: none;
-    }
-
-    a:hover {
-      text-decoration: underline;
     }
   </style>
 </head>
@@ -121,7 +93,9 @@
 
   <header>
     <h1>Block Notes</h1>
-    <p>Inscribe a message forever on Bitcoin — one block at a time.</p>
+    <p>One block. One message. Yours forever on Bitcoin.</p>
+    <button onclick="connectWallet()">Connect UniSat Wallet</button>
+    <div class="address-bar" id="walletAddress">Not connected</div>
   </header>
 
   <main>
@@ -131,28 +105,34 @@
     <label for="message">Message</label>
     <textarea id="message" rows="4" placeholder="Say something eternal..."></textarea>
 
-    <label for="tag">Name or Wallet (optional)</label>
-    <input type="text" id="tag" placeholder="@blockman-ai or bc1q..."/>
-
-    <div class="buttons">
-      <button onclick="generatePreview()">Preview</button>
-      <button onclick="inscribeWithUnisat()">Inscribe with UniSat</button>
-    </div>
+    <button onclick="generatePreview()">Preview Note</button>
 
     <div class="preview" id="preview" style="display:none;"></div>
   </main>
 
-  <footer>
-    Powered by Bitcoin. No login. No middlemen. Just forever.  
-    <br/>
-    Wallet: <a href="https://unisat.io" target="_blank">UniSat</a> or <a href="https://xverse.app" target="_blank">Xverse</a>
-  </footer>
-
   <script>
+    let address = "";
+
+    async function connectWallet() {
+      if (!window.unisat) {
+        alert("UniSat Wallet not found. Please install it from https://unisat.io");
+        return;
+      }
+
+      try {
+        const accounts = await window.unisat.requestAccounts();
+        address = accounts[0];
+        document.getElementById("walletAddress").innerText = `Connected: ${address}`;
+      } catch (error) {
+        console.error("Wallet connection error:", error);
+        alert("Failed to connect wallet.");
+      }
+    }
+
     function generatePreview() {
       const block = document.getElementById('block').value.trim();
       const message = document.getElementById('message').value.trim();
-      const tag = document.getElementById('tag').value.trim() || "@anonymous";
+      const tag = address || "@blockman-ai";
 
       if (!block || !message) {
         alert("Please fill in both the block number and message.");
@@ -162,21 +142,6 @@
       const preview = `block-note:${block}\n"${message}" – ${tag}`;
       document.getElementById('preview').style.display = 'block';
       document.getElementById('preview').innerText = preview;
-    }
-
-    function inscribeWithUnisat() {
-      const block = document.getElementById('block').value.trim();
-      const message = document.getElementById('message').value.trim();
-      const tag = document.getElementById('tag').value.trim() || "@anonymous";
-
-      if (!block || !message) {
-        alert("Please fill in both the block number and message.");
-        return;
-      }
-
-      const text = encodeURIComponent(`block-note:${block}\n"${message}" – ${tag}`);
-      const link = `https://unisat.io/inscribe?type=text&data=${text}`;
-      window.open(link, "_blank");
     }
   </script>
 
