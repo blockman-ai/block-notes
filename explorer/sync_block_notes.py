@@ -1,4 +1,5 @@
-import requests, json
+import requests
+import json
 
 API_KEY = "9cd23c3c-a965-4a27-90f2-ce84848d83eb"
 
@@ -25,7 +26,6 @@ for item in data.get("results", []):
     if not inscription_id or not block:
         continue
 
-    # Look for format like: block-note:<block>
     lines = content.strip().split("\n")
     block_line = next((l for l in lines if "block-note:" in l), None)
     message_line = next((l for l in lines if l != block_line), None)
@@ -42,10 +42,7 @@ for item in data.get("results", []):
     except:
         continue
 
-# Save to notes.json
 with open("explorer/notes.json", "w") as f:
     json.dump(notes, f, indent=2)
 
 print(f"Indexed {len(notes)} block-notes from chain.")
-￼Enter file contents here
- 
