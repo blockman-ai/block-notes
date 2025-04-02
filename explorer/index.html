@@ -80,6 +80,13 @@
       text-decoration: underline;
     }
 
+    .author-link {
+      color: #aaa;
+      font-size: 0.85em;
+      margin-top: 6px;
+      display: block;
+    }
+
     footer {
       text-align: center;
       color: #777;
@@ -109,6 +116,13 @@
   <script>
     let fullData = {};
 
+    function renderAuthor(message) {
+      const match = message.match(/–\s(@[\w-]+|bc1\w+)/);
+      if (!match) return "";
+      const tag = match[1];
+      return `<a href="#" onclick="filterByAuthor('${tag}')" class="author-link">by ${tag}</a>`;
+    }
+
     async function loadNotes() {
       try {
         const res = await fetch("notes.json");
@@ -125,7 +139,7 @@
       const container = document.getElementById("notesContainer");
       container.innerHTML = "";
 
-      const sorted = Object.entries(data).sort((a, b) => b[0] - a[0]); // newest first
+      const sorted = Object.entries(data).sort((a, b) => b[0] - a[0]);
 
       for (const [block, note] of sorted) {
         const div = document.createElement("div");
@@ -133,6 +147,7 @@
         div.innerHTML = `
           <h2>Block ${block}</h2>
           <p>${note.message}</p>
+          ${renderAuthor(note.message)}
           <a href="https://ordinals.com/inscription/${note.inscription}" target="_blank">View Inscription</a>
         `;
         container.appendChild(div);
@@ -152,7 +167,19 @@
           filtered[block] = note;
         }
       }
+      renderNotes(filtered);
+    }
 
+    function filterByAuthor(tag) {
+      const filtered = {};
+
+      for (const [block, note] of Object.entries(fullData)) {
+        if (note.message.includes(tag)) {
+          filtered[block] = note;
+        }
+      }
+
+      document.getElementById("searchBlock").value = "";
       renderNotes(filtered);
     }
 
