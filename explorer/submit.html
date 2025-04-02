@@ -145,6 +145,79 @@
       document.getElementById('preview').innerText = preview;
     }
   </script>
+<script>
+  let address = "";
 
+  async function connectWallet() {
+    if (!window.unisat) {
+      alert("UniSat Wallet not found. Please install it from https://unisat.io");
+      return;
+    }
+
+    try {
+      const accounts = await window.unisat.requestAccounts();
+      address = accounts[0];
+      document.getElementById("walletAddress").innerText = `Connected: ${address}`;
+    } catch (error) {
+      console.error("Wallet connection error:", error);
+      alert("Failed to connect wallet.");
+    }
+  }
+
+  function generatePreview() {
+    const block = document.getElementById('block').value.trim();
+    const message = document.getElementById('message').value.trim();
+    const tag = address || "@blockman-ai";
+
+    if (!block || !message) {
+      alert("Please fill in both the block number and message.");
+      return;
+    }
+
+    const preview = `block-note:${block}\n"${message}" – ${tag}`;
+    document.getElementById('preview').style.display = 'block';
+    document.getElementById('preview').innerText = preview;
+  }
+
+  async function inscribeOnChain() {
+    if (!window.unisat) {
+      alert("UniSat not found.");
+      return;
+    }
+
+    const block = document.getElementById('block').value.trim();
+    const message = document.getElementById('message').value.trim();
+    const tag = address || "@blockman-ai";
+
+    if (!block || !message) {
+      alert("Fill in block number and message first.");
+      return;
+    }
+
+    const content = `block-note:${block}\n"${message}" – ${tag}`;
+
+    try {
+      // 1. Create Inscription Request (text format)
+      const inscriptionReq = {
+        type: "text/plain;charset=utf-8",
+        content: content
+      };
+
+      // 2. Request UniSat to create Inscription PSBT
+      const psbtHex = await window.unisat.createInscription(inscriptionReq);
+
+      // 3. Sign the PSBT
+      const signedPsbt = await window.unisat.signPsbt(psbtHex, { autoFinalized: true });
+
+      // 4. Broadcast the transaction
+      const txid = await window.unisat.pushPsbt(signedPsbt);
+
+      alert("Inscribe success! TXID:\n" + txid);
+    } catch (err) {
+      console.error("Inscription failed:", err);
+      alert("Inscription failed. Check console or wallet.");
+    }
+  }
+</script>
 </body>
 </html>
