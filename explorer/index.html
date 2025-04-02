@@ -6,32 +6,73 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     body {
-      background: #f6f1e7;
-      font-family: Georgia, serif;
+      background: #fefdfb;
+      font-family: 'Georgia', serif;
       margin: 0;
       padding: 0;
+      color: #333;
     }
+
     header {
-      background: #222;
-      color: #fff;
-      text-align: center;
+      background: #1a1a1a;
+      color: #fefdfb;
       padding: 20px;
-      font-size: 1.5em;
+      text-align: center;
+      font-size: 1.8em;
+      font-weight: bold;
       letter-spacing: 1px;
     }
+
+    .container {
+      max-width: 700px;
+      margin: 30px auto;
+      padding: 0 20px;
+    }
+
     .note {
-      border-bottom: 1px solid #ddd;
+      background: #fff;
+      border-left: 4px solid #333;
       padding: 20px;
+      margin-bottom: 25px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+      transition: 0.3s;
     }
+
+    .note:hover {
+      transform: scale(1.01);
+    }
+
     .note h2 {
-      margin: 0 0 10px;
+      margin-top: 0;
+      font-size: 1.2em;
+      color: #444;
     }
+
+    .note p {
+      font-size: 1em;
+      margin: 10px 0;
+    }
+
     .note a {
-      color: #2e4c96;
       text-decoration: none;
+      color: #0066cc;
     }
+
     .note a:hover {
       text-decoration: underline;
+    }
+
+    footer {
+      text-align: center;
+      padding: 40px;
+      font-size: 0.9em;
+      color: #aaa;
+    }
+
+    @media (max-width: 600px) {
+      .note {
+        padding: 15px;
+      }
     }
   </style>
 </head>
@@ -39,27 +80,40 @@
 
   <header>Block Notes Explorer</header>
 
-  <div id="notes"></div>
+  <div class="container" id="notes">
+    Loading block notes...
+  </div>
+
+  <footer>
+    Powered by Bitcoin • Curated by @blockman-ai • <a href="https://github.com/blockman-ai/block-notes/issues/new?title=Block+Note+Submission" target="_blank">Submit a Note</a>
+  </footer>
 
   <script>
     fetch('../data/notes.json')
-      .then(response => response.json())
+      .then(res => res.json())
       .then(data => {
         const container = document.getElementById('notes');
-        Object.keys(data).sort((a, b) => b - a).forEach(block => {
+        container.innerHTML = "";
+
+        const blocks = Object.keys(data).sort((a, b) => b - a); // newest first
+
+        blocks.forEach(block => {
           const note = data[block];
           const div = document.createElement('div');
           div.className = 'note';
           div.innerHTML = `
             <h2>Block ${block}</h2>
             <p>${note.message}</p>
-            <p><a href="https://ordinals.com/inscription/${note.inscription}" target="_blank">View Inscription</a></p>
+            <p><a href="https://ordinals.com/inscription/${note.inscription}" target="_blank">View on Ordinals</a></p>
           `;
           container.appendChild(div);
         });
+      })
+      .catch(err => {
+        document.getElementById('notes').innerHTML = "Failed to load notes.";
+        console.error(err);
       });
   </script>
 
 </body>
 </html>
-
