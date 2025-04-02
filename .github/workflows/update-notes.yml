@@ -1,0 +1,33 @@
+name: Auto Sync Block Notes
+
+on:
+  schedule:
+    - cron: '0 * * * *'  # every hour
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: Install requests
+        run: pip install requests
+
+      - name: Run sync script
+        run: python explorer/sync_block_notes.py
+
+      - name: Commit & push notes.json
+        run: |
+          git config --global user.email "action@github.com"
+          git config --global user.name "GitHub Action"
+          git add explorer/notes.json
+          git commit -m "Auto update notes.json from Ordiscan" || echo "No changes"
+          git push
