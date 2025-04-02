@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Blockstream Feed — On-Chain Posts</title>
+  <style>
+    body {
+      background: #0f0f0f;
+      color: #fefefe;
+      font-family: "Segoe UI", sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+
+    header {
+      padding: 30px 20px;
+      text-align: center;
+      background: #111;
+      border-bottom: 1px solid #222;
+    }
+
+    header h1 {
+      font-size: 2.2em;
+      margin: 0;
+      color: #ffcc00;
+    }
+
+    header p {
+      color: #ccc;
+    }
+
+    .feed {
+      max-width: 700px;
+      margin: 40px auto;
+      padding: 0 20px;
+    }
+
+    .note {
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+
+    .note h2 {
+      margin: 0;
+      font-size: 1em;
+      color: #ffcc00;
+    }
+
+    .note p {
+      margin: 10px 0 0;
+      font-family: monospace;
+      white-space: pre-wrap;
+    }
+
+    .note a {
+      color: #ffcc00;
+      font-size: 0.85em;
+      text-decoration: none;
+    }
+
+    .author-link {
+      color: #aaa;
+      font-size: 0.9em;
+      display: inline-block;
+      margin-top: 6px;
+    }
+
+    .author-link:hover {
+      color: #fff;
+    }
+
+    footer {
+      text-align: center;
+      margin: 40px 0;
+      font-size: 0.8em;
+      color: #777;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>Blockstream Feed</h1>
+    <p>A stream of forever messages inscribed to Bitcoin</p>
+  </header>
+
+  <div class="feed" id="feedContainer">
+    <p>Loading notes...</p>
+  </div>
+
+  <footer>
+    Powered by Bitcoin | Maintained by @blockman-ai
+  </footer>
+
+  <script>
+    function getQueryParam(name) {
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get(name);
+    }
+
+    async function loadFeed() {
+      try {
+        const res = await fetch("notes.json");
+        const data = await res.json();
+        const sorted = Object.entries(data).sort((a, b) => b[0] - a[0]);
+
+        const authorFilter = getQueryParam("author");
+        const container = document.getElementById("feedContainer");
+        container.innerHTML = "";
+
+        let visible = 0;
+        for (const [block, note] of sorted) {
+          const tagMatch = note.message.match(/–\s(@[\w-]+|bc1\w+)/);
+          const author = tagMatch ? tagMatch[1] : "unknown";
+
+          if (authorFilter && author !== authorFilter) continue;
+
+          const div = document.createElement("div");
+          div.className = "note";
+          div.innerHTML = `
+            <h2>Block ${block}</h2>
+            <p>${note.message}</p>
+            <a class="author-link" href="?author=${author}">by ${author}</a><br>
+            <a href="https://ordinals.com/inscription/${note.inscription}" target="_blank">View Inscription</a>
+          `;
+          container.appendChild(div);
+          visible++;
+        }
+
+        if (visible === 0) {
+          container.innerHTML = "<p style='color:gray;'>No posts found for this author.</p>";
+        }
+      } catch (err) {
+        document.getElementById("feedContainer").innerHTML = `<p style="color:red;">Failed to load feed</p>`;
+      }
+    }
+
+    loadFeed();
+  </script>
+
+</body>
+</html>
