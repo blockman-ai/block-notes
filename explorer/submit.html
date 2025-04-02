@@ -5,36 +5,299 @@
   <title>Submit a Block Note</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    :root {
-      --primary: #f7931a; /* Bitcoin orange */
-      --dark: #1a1a1a;
-      --light: #fdfaf5;
-      --gray: #666;
-      --error: #d32f2f;
-    }
-
-    * {
+    body {
+      background: #fdfaf5;
+      font-family: Georgia, serif;
       margin: 0;
       padding: 0;
-      box-sizing: border-box;
-    }
-
-    body {
-      background: var(--light);
-      font-family: 'Segoe UI', Arial, sans-serif;
-      color: var(--dark);
-      line-height: 1.6;
+      color: #333;
     }
 
     .hero {
-      background: linear-gradient(135deg, var(--dark) 0%, #2c2c2c 100%);
-      color: white;
       text-align: center;
-      padding: 4rem 2rem;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      padding: 50px 20px;
+      background: #1a1a1a;
+      color: #fff;
     }
 
     .hero h1 {
-      font-size: 2.5rem;
-      margin-bottom: 1rem;
-      text-transform
+      font-size: 2.5em;
+      margin-bottom: 10px;
+    }
+
+    .hero p {
+      font-size: 1.2em;
+      color: #ccc;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 40px auto;
+      padding: 0 20px;
+    }
+
+    label {
+      font-weight: bold;
+      margin-top: 20px;
+      display: block;
+    }
+
+    input, textarea {
+      width: 100%;
+      padding: 12px;
+      margin-top: 8px;
+      margin-bottom: 20px;
+      border: 1px solid #ccc;
+      font-size: 1em;
+      font-family: inherit;
+    }
+
+    button {
+      padding: 12px 20px;
+      font-size: 1em;
+      background: #111;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+      margin-right: 10px;
+    }
+
+    button:hover {
+      background: #333;
+    }
+
+    .preview {
+      background: #fffbea;
+      padding: 20px;
+      margin-top: 20px;
+      font-family: monospace;
+      white-space: pre-wrap;
+      display: none; /* Fixed missing display property */
+    }
+
+    #footer-note {
+      font-size: 0.9em;
+      text-align: center;
+      margin: 40px auto;
+      color: #999;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="hero">
+    <h1>Write to the Chain</h1>
+    <p>Leave your message tied to a Bitcoin block. Make it eternal.</p>
+  </div>
+
+  <div class="container">
+    <label for="block">Block Number:</label>
+    <input type="text" id="block" placeholder="e.g. 840420">
+
+    <label for="message">Your Message:</label>
+    <textarea id="message" rows="4" placeholder="What do you want to inscribe?"></textarea>
+
+    <label for="name">Your Name or Wallet (optional):</label>
+    <input type="text" id="name" placeholder="@blockman-ai or bc1q...">
+
+    <button onclick="generatePreview()">Generate Note</button>
+    <button onclick="inscribeWithUnisat()">Inscribe with UniSat</button>
+
+    <div class="preview" id="preview"></div> <!-- Fixed missing closing tag -->
+  </div>
+
+  <div id="footer-note">
+    Don’t have a wallet? Use <a href="https://unisat.io" target="_blank">UniSat</a> or <a href="https://xverse.app" target="_blank">Xverse</a> to get started.
+  </div>
+
+  <script>
+    function generatePreview() {
+      const block = document.getElementById('block').value.trim();
+      const message = document.getElementById('message').value.trim();
+      const name = document.getElementById('name').value.trim() || "@anonymous";
+
+      if (!block || !message) {
+        alert("Please enter both a block number and a message.");
+        return;
+      }
+
+      const preview = `block-note:${block}\n"${message}" – ${name}`;
+      const previewDiv = document.getElementById('preview');
+      previewDiv.style.display = 'block'; // Ensure display is set correctly
+      previewDiv.textContent = preview; // Use textContent instead of innerText for consistency
+    }
+
+    function inscribeWithUnisat() {
+      const block = document.getElementById('block').value.trim();
+      const message = document.getElementById('message').value.trim();
+      const name = document.getElementById('name').value.trim() || "@anonymous";
+
+      if (!block || !message) {
+        alert("Please enter both a block number and a message.");
+        return;
+      }
+
+      try {
+        const text = encodeURIComponent(`block-note:${block}\n"${message}" – ${name}`);
+        const link = `https://unisat.io/inscribe?type=text&data=${text}`;
+        window.open(link, "_blank");
+      } catch (error) {
+        console.error('Error encoding URI:', error);
+        alert('Failed to prepare inscription. Please try again.');
+      }
+    }
+  </script>
+
+</body>
+</html><!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Submit a Block Note</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      background: #fdfaf5;
+      font-family: Georgia, serif;
+      margin: 0;
+      padding: 0;
+      color: #333;
+    }
+
+    .hero {
+      text-align: center;
+      padding: 50px 20px;
+      background: #1a1a1a;
+      color: #fff;
+    }
+
+    .hero h1 {
+      font-size: 2.5em;
+      margin-bottom: 10px;
+    }
+
+    .hero p {
+      font-size: 1.2em;
+      color: #ccc;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 40px auto;
+      padding: 0 20px;
+    }
+
+    label {
+      font-weight: bold;
+      margin-top: 20px;
+      display: block;
+    }
+
+    input, textarea {
+      width: 100%;
+      padding: 12px;
+      margin-top: 8px;
+      margin-bottom: 20px;
+      border: 1px solid #ccc;
+      font-size: 1em;
+      font-family: inherit;
+    }
+
+    button {
+      padding: 12px 20px;
+      font-size: 1em;
+      background: #111;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+      margin-right: 10px;
+    }
+
+    button:hover {
+      background: #333;
+    }
+
+    .preview {
+      background: #fffbea;
+      padding: 20px;
+      margin-top: 20px;
+      font-family: monospace;
+      white-space: pre-wrap;
+      display: none; /* Fixed missing display property */
+    }
+
+    #footer-note {
+      font-size: 0.9em;
+      text-align: center;
+      margin: 40px auto;
+      color: #999;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="hero">
+    <h1>Write to the Chain</h1>
+    <p>Leave your message tied to a Bitcoin block. Make it eternal.</p>
+  </div>
+
+  <div class="container">
+    <label for="block">Block Number:</label>
+    <input type="text" id="block" placeholder="e.g. 840420">
+
+    <label for="message">Your Message:</label>
+    <textarea id="message" rows="4" placeholder="What do you want to inscribe?"></textarea>
+
+    <label for="name">Your Name or Wallet (optional):</label>
+    <input type="text" id="name" placeholder="@blockman-ai or bc1q...">
+
+    <button onclick="generatePreview()">Generate Note</button>
+    <button onclick="inscribeWithUnisat()">Inscribe with UniSat</button>
+
+    <div class="preview" id="preview"></div> <!-- Fixed missing closing tag -->
+  </div>
+
+  <div id="footer-note">
+    Don’t have a wallet? Use <a href="https://unisat.io" target="_blank">UniSat</a> or <a href="https://xverse.app" target="_blank">Xverse</a> to get started.
+  </div>
+
+  <script>
+    function generatePreview() {
+      const block = document.getElementById('block').value.trim();
+      const message = document.getElementById('message').value.trim();
+      const name = document.getElementById('name').value.trim() || "@anonymous";
+
+      if (!block || !message) {
+        alert("Please enter both a block number and a message.");
+        return;
+      }
+
+      const preview = `block-note:${block}\n"${message}" – ${name}`;
+      const previewDiv = document.getElementById('preview');
+      previewDiv.style.display = 'block'; // Ensure display is set correctly
+      previewDiv.textContent = preview; // Use textContent instead of innerText for consistency
+    }
+
+    function inscribeWithUnisat() {
+      const block = document.getElementById('block').value.trim();
+      const message = document.getElementById('message').value.trim();
+      const name = document.getElementById('name').value.trim() || "@anonymous";
+
+      if (!block || !message) {
+        alert("Please enter both a block number and a message.");
+        return;
+      }
+
+      try {
+        const text = encodeURIComponent(`block-note:${block}\n"${message}" – ${name}`);
+        const link = `https://unisat.io/inscribe?type=text&data=${text}`;
+        window.open(link, "_blank");
+      } catch (error) {
+        console.error('Error encoding URI:', error);
+        alert('Failed to prepare inscription. Please try again.');
+      }
+    }
+  </script>
+
+</body>
+</html>
