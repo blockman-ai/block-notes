@@ -3,62 +3,84 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Block Notes Explorer</title>
+  <title>Block Notes — Forever On Bitcoin</title>
   <style>
     body {
-      background: #0e0e0e;
-      color: #fefefe;
-      font-family: "Segoe UI", sans-serif;
       margin: 0;
-      padding: 0;
+      font-family: "Segoe UI", sans-serif;
+      background: #0f0f0f;
+      color: #fefefe;
     }
 
     header {
-      padding: 40px 20px;
       text-align: center;
+      padding: 60px 20px 40px;
       background: #111;
       border-bottom: 1px solid #222;
     }
 
     header h1 {
-      margin: 0;
-      font-size: 2.5em;
+      font-size: 2.8em;
       color: #ffcc00;
+      margin-bottom: 10px;
     }
 
     header p {
-      color: #888;
-      font-size: 1em;
+      font-size: 1.2em;
+      color: #999;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .links {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      margin-top: 30px;
+    }
+
+    .links a {
+      padding: 12px 24px;
+      background: #ffcc00;
+      color: #111;
+      border-radius: 6px;
+      text-decoration: none;
+      font-weight: bold;
+    }
+
+    .links a:hover {
+      background: #e6b800;
     }
 
     main {
       max-width: 800px;
-      margin: 30px auto;
+      margin: 40px auto;
       padding: 0 20px;
     }
 
-    input[type="text"] {
-      width: 100%;
-      padding: 10px;
+    .stats {
       background: #1a1a1a;
-      color: #fff;
+      padding: 20px;
       border: 1px solid #333;
-      margin-bottom: 20px;
-      border-radius: 6px;
-      font-size: 1em;
+      border-radius: 8px;
+      margin-bottom: 30px;
+    }
+
+    .stats h2 {
+      margin-top: 0;
+      color: #ffcc00;
     }
 
     .note {
       border: 1px solid #333;
-      background: #1a1a1a;
+      background: #1b1b1b;
       padding: 20px;
       border-radius: 8px;
       margin-bottom: 20px;
     }
 
-    .note h2 {
+    .note h3 {
       margin: 0 0 10px;
-      font-size: 1.2em;
       color: #ffcc00;
     }
 
@@ -69,22 +91,15 @@
     }
 
     .note a {
-      color: #ffcc00;
-      font-size: 0.9em;
       display: inline-block;
       margin-top: 8px;
+      color: #ffcc00;
       text-decoration: none;
+      font-size: 0.9em;
     }
 
     .note a:hover {
       text-decoration: underline;
-    }
-
-    .author-link {
-      color: #aaa;
-      font-size: 0.85em;
-      margin-top: 6px;
-      display: block;
     }
 
     footer {
@@ -98,89 +113,74 @@
 <body>
 
   <header>
-    <h1>Block Notes Explorer</h1>
-    <p>Explore forever messages, inscribed on Bitcoin blocks</p>
+    <h1>Block Notes</h1>
+    <p>Write forever messages to Bitcoin. Immutable. Unstoppable. Yours.</p>
+    <div class="links">
+      <a href="./explorer/submit.html">Inscribe a Note</a>
+      <a href="./explorer/">Explore Notes</a>
+      <a href="https://github.com/blockman-ai/block-notes" target="_blank">GitHub</a>
+    </div>
   </header>
 
   <main>
-    <input type="text" id="searchBlock" placeholder="Search block number..." oninput="filterNotes()" />
-    <div id="notesContainer">
-      <p>Loading notes from the chain...</p>
+    <div class="stats">
+      <h2>Live Stats</h2>
+      <p><strong>Total Notes:</strong> <span id="totalNotes">...</span></p>
+      <p><strong>Unique Authors:</strong> <span id="uniqueAuthors">...</span></p>
+      <p><strong>Latest Block:</strong> <span id="latestBlock">...</span></p>
+    </div>
+
+    <h2 style="color:#ffcc00;">Latest Notes</h2>
+    <div id="latestNotes">
+      <p>Loading latest notes...</p>
     </div>
   </main>
 
   <footer>
-    Powered by <a href="https://github.com/blockman-ai/block-notes" target="_blank" style="color:#ffcc00;">Block Notes</a> on Bitcoin
+    Built with Bitcoin. Maintained by @blockman-ai. Powered by truth.
   </footer>
 
   <script>
-    let fullData = {};
-
-    function renderAuthor(message) {
-      const match = message.match(/–\s(@[\w-]+|bc1\w+)/);
-      if (!match) return "";
-      const tag = match[1];
-      return `<a href="#" onclick="filterByAuthor('${tag}')" class="author-link">by ${tag}</a>`;
-    }
-
     async function loadNotes() {
       try {
-        const res = await fetch("notes.json");
+        const res = await fetch("explorer/notes.json");
         const data = await res.json();
-        fullData = data;
-        renderNotes(data);
+
+        const total = Object.keys(data).length;
+        const blocks = Object.keys(data).map(Number);
+        const latestBlock = Math.max(...blocks);
+
+        const authors = new Set();
+        Object.values(data).forEach(note => {
+          const match = note.message.match(/–\s(@[\w-]+|bc1\w+)/);
+          if (match) authors.add(match[1]);
+        });
+
+        document.getElementById("totalNotes").innerText = total;
+        document.getElementById("latestBlock").innerText = latestBlock;
+        document.getElementById("uniqueAuthors").innerText = authors.size;
+
+        const sorted = Object.entries(data).sort((a, b) => b[0] - a[0]);
+        const recent = sorted.slice(0, 5);
+
+        const container = document.getElementById("latestNotes");
+        container.innerHTML = "";
+
+        for (const [block, note] of recent) {
+          const div = document.createElement("div");
+          div.className = "note";
+          div.innerHTML = `
+            <h3>Block ${block}</h3>
+            <p>${note.message}</p>
+            <a href="https://ordinals.com/inscription/${note.inscription}" target="_blank">View Inscription</a>
+          `;
+          container.appendChild(div);
+        }
+
       } catch (err) {
-        document.getElementById("notesContainer").innerHTML = `<p style="color:red;">Failed to load notes.json</p>`;
         console.error(err);
+        document.getElementById("latestNotes").innerHTML = `<p style="color:red;">Error loading notes.json</p>`;
       }
-    }
-
-    function renderNotes(data) {
-      const container = document.getElementById("notesContainer");
-      container.innerHTML = "";
-
-      const sorted = Object.entries(data).sort((a, b) => b[0] - a[0]);
-
-      for (const [block, note] of sorted) {
-        const div = document.createElement("div");
-        div.className = "note";
-        div.innerHTML = `
-          <h2>Block ${block}</h2>
-          <p>${note.message}</p>
-          ${renderAuthor(note.message)}
-          <a href="https://ordinals.com/inscription/${note.inscription}" target="_blank">View Inscription</a>
-        `;
-        container.appendChild(div);
-      }
-    }
-
-    function filterNotes() {
-      const query = document.getElementById("searchBlock").value.trim();
-      if (!query) {
-        renderNotes(fullData);
-        return;
-      }
-
-      const filtered = {};
-      for (const [block, note] of Object.entries(fullData)) {
-        if (block.includes(query)) {
-          filtered[block] = note;
-        }
-      }
-      renderNotes(filtered);
-    }
-
-    function filterByAuthor(tag) {
-      const filtered = {};
-
-      for (const [block, note] of Object.entries(fullData)) {
-        if (note.message.includes(tag)) {
-          filtered[block] = note;
-        }
-      }
-
-      document.getElementById("searchBlock").value = "";
-      renderNotes(filtered);
     }
 
     loadNotes();
