@@ -1,61 +1,68 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Block Notes Explorer</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     body {
-      background: #fefdfb;
-      font-family: 'Georgia', serif;
+      background: #0e0e0e;
+      color: #fefefe;
+      font-family: "Segoe UI", sans-serif;
       margin: 0;
       padding: 0;
-      color: #333;
     }
 
     header {
-      background: #1a1a1a;
-      color: #fefdfb;
-      padding: 20px;
+      padding: 40px 20px;
       text-align: center;
-      font-size: 1.8em;
-      font-weight: bold;
-      letter-spacing: 1px;
+      background: #111;
+      border-bottom: 1px solid #222;
     }
 
-    .container {
-      max-width: 700px;
+    header h1 {
+      margin: 0;
+      font-size: 2.5em;
+      color: #ffcc00;
+    }
+
+    header p {
+      color: #888;
+      font-size: 1em;
+    }
+
+    main {
+      max-width: 800px;
       margin: 30px auto;
       padding: 0 20px;
     }
 
     .note {
-      background: #fff;
-      border-left: 4px solid #333;
+      border: 1px solid #333;
+      background: #1a1a1a;
       padding: 20px;
-      margin-bottom: 25px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-      transition: 0.3s;
-    }
-
-    .note:hover {
-      transform: scale(1.01);
+      border-radius: 8px;
+      margin-bottom: 20px;
     }
 
     .note h2 {
-      margin-top: 0;
+      margin: 0 0 10px;
       font-size: 1.2em;
-      color: #444;
+      color: #ffcc00;
     }
 
     .note p {
-      font-size: 1em;
-      margin: 10px 0;
+      margin: 0;
+      font-family: monospace;
+      white-space: pre-wrap;
     }
 
     .note a {
+      color: #ffcc00;
+      font-size: 0.9em;
+      display: inline-block;
+      margin-top: 8px;
       text-decoration: none;
-      color: #0066cc;
     }
 
     .note a:hover {
@@ -64,55 +71,55 @@
 
     footer {
       text-align: center;
-      padding: 40px;
+      color: #777;
       font-size: 0.9em;
-      color: #aaa;
-    }
-
-    @media (max-width: 600px) {
-      .note {
-        padding: 15px;
-      }
+      margin: 40px 0;
     }
   </style>
 </head>
 <body>
 
-  <header>Block Notes Explorer</header>
+  <header>
+    <h1>Block Notes Explorer</h1>
+    <p>Explore forever messages, inscribed on Bitcoin blocks</p>
+  </header>
 
-  <div class="container" id="notes">
-    Loading block notes...
-  </div>
+  <main id="notesContainer">
+    <p>Loading notes from the chain...</p>
+  </main>
 
   <footer>
-    Powered by Bitcoin • Curated by @blockman-ai • <a href="https://github.com/blockman-ai/block-notes/issues/new?title=Block+Note+Submission" target="_blank">Submit a Note</a>
+    Powered by <a href="https://github.com/blockman-ai/block-notes" target="_blank" style="color:#ffcc00;">Block Notes</a> on Bitcoin
   </footer>
 
   <script>
-    fetch('../data/notes.json')
-      .then(res => res.json())
-      .then(data => {
-        const container = document.getElementById('notes');
+    async function loadNotes() {
+      try {
+        const res = await fetch("notes.json");
+        const data = await res.json();
+        const container = document.getElementById("notesContainer");
+
         container.innerHTML = "";
 
-        const blocks = Object.keys(data).sort((a, b) => b - a); // newest first
+        const sorted = Object.entries(data).sort((a, b) => b[0] - a[0]); // Newest first
 
-        blocks.forEach(block => {
-          const note = data[block];
-          const div = document.createElement('div');
-          div.className = 'note';
+        for (const [block, note] of sorted) {
+          const div = document.createElement("div");
+          div.className = "note";
           div.innerHTML = `
             <h2>Block ${block}</h2>
             <p>${note.message}</p>
-            <p><a href="https://ordinals.com/inscription/${note.inscription}" target="_blank">View on Ordinals</a></p>
+            <a href="https://ordinals.com/inscription/${note.inscription}" target="_blank">View Inscription</a>
           `;
           container.appendChild(div);
-        });
-      })
-      .catch(err => {
-        document.getElementById('notes').innerHTML = "Failed to load notes.";
+        }
+      } catch (err) {
+        document.getElementById("notesContainer").innerHTML = `<p style="color:red;">Failed to load notes.json</p>`;
         console.error(err);
-      });
+      }
+    }
+
+    loadNotes();
   </script>
 
 </body>
