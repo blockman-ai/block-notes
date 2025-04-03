@@ -1,3 +1,30 @@
+async function fetchInscriptions(address) {
+  try {
+    const response = await fetch(`https://api.hiro.so/ordinals/v1/inscriptions?address=${address}`);
+    if (!response.ok) {
+      throw new Error(`Error fetching inscriptions: ${response.statusText}`);
+    }
+    const data = await response.json();
+    const notes = {};
+
+    data.results.forEach(inscription => {
+      const block = inscription.genesis_block_height;
+      const message = inscription.content_body || "No message available";
+      notes[block] = {
+        message: `${message} – ${address}`,
+        inscription: inscription.id
+      };
+    });
+
+    localStorage.setItem("blockNotes", JSON.stringify(notes));
+  } catch (error) {
+    console.error("Failed to fetch inscriptions:", error);
+  }
+}
+
+// Replace with your Bitcoin address
+const bitcoinAddress = "bc1pln2sqsx8gj0xdprshr97wdxsdy9uddvf4wqlsm37smcehfa7weqsms6ccn";
+fetchInscriptions(bitcoinAddress);
 // Auto-generated inscription cache
 localStorage.setItem("blockNotes", JSON.stringify({
   "840011": {
