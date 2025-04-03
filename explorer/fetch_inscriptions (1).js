@@ -40,6 +40,7 @@ localStorage.setItem("blockNotes", JSON.stringify({
     inscription: "7d5c91bd725d75eb8ffb7f8ac91b2cb3e13f5c3e9a3a4c55897de2a60ed70db5i0"
   }
 }));
+<script src="./fetch_inscriptions.js"></script>
 
 // Auto-generated inscription cache
 localStorage.setItem("blockNotes", "{\"840420\": {\"message\": \"The revolution will be inscribed. \\u2013 bc1pln2sqsx8gj0xdprshr97wdxsdy9uddvf4wqlsm37smcehfa7weqsms6ccn\", \"inscription\": \"8c3f4e...abc123\"}, \"840421\": {\"message\": \"Immutable thoughts, forever chained. \\u2013 bc1pln2sqsx8gj0xdprshr97wdxsdy9uddvf4wqlsm37smcehfa7weqsms6ccn\", \"inscription\": \"9f4a6b...def456\"}, \"840422\": {\"message\": \"Bitcoin remembers everything. \\u2013 bc1pln2sqsx8gj0xdprshr97wdxsdy9uddvf4wqlsm37smcehfa7weqsms6ccn\", \"inscription\": \"7e2d1c...ghi789\"}}");
