@@ -1,1 +1,40 @@
-{}
+import json
+import os
+
+# Simulated function to fetch new inscriptions from API (replace with real API calls)
+def fetch_new_inscriptions():
+    return {
+        "840011": {
+            "message": "Forever starts with one block. – @blockman-ai",
+            "inscription": "abc123def456ghi789jkl012mno345pqrs678tuv901wxyz234abcd567efgh890"
+        },
+        "840012": {
+            "message": "Bitcoin doesn’t forget. – @blockman-ai",
+            "inscription": "123abc456def789ghi012jkl345mno678pqr901stu234vwx567yzab890cde123"
+        }
+    }
+
+# Load existing notes
+existing_file_path = "/mnt/data/notes.json"
+if os.path.exists(existing_file_path):
+    with open(existing_file_path, "r") as f:
+        existing_notes = json.load(f)
+else:
+    existing_notes = {}
+
+# Fetch new verified inscriptions (replace with actual API logic)
+new_inscriptions = fetch_new_inscriptions()
+
+# Merge: Add only new blocks
+for block, data in new_inscriptions.items():
+    if block not in existing_notes:
+        existing_notes[block] = data
+
+# Save updated notes
+with open(existing_file_path, "w") as f:
+    json.dump(existing_notes, f, indent=2)
+
+import pandas as pd
+import ace_tools as tools; tools.display_dataframe_to_user(name="Updated Notes", dataframe=pd.DataFrame([
+    {"Block": k, "Message": v["message"], "Inscription ID": v["inscription"]} for k, v in existing_notes.items()
+]))
