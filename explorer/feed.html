@@ -130,6 +130,68 @@
 
     loadFeed();
   </script>
+<script src="./fetch_inscriptions.js"></script>
+<script>
+  const notes = JSON.parse(localStorage.getItem("blockNotes") || "{}");
 
+  const container = document.getElementById("feedContainer");
+  container.innerHTML = "";
+
+  Object.entries(notes).forEach(([block, note]) => {
+    const div = document.createElement("div");
+    div.className = "note";
+    div.innerHTML = `
+      <h2>Block ${block}</h2>
+      <p>${note.message}</p>
+      <a href="https://ordinals.com/inscription/${note.inscription}" target="_blank">View Inscription</a>
+    `;
+    container.appendChild(div);
+  });
+</script>
+  <!-- Load real inscriptions and fallback to local notes if needed -->
+<script src="./fetch_inscriptions.js"></script>
+<script>
+  async function loadFeed() {
+    const container = document.getElementById("feedContainer");
+    container.innerHTML = "<p>Loading notes...</p>";
+
+    try {
+      let notes;
+
+      // Prefer localStorage (live fetched from fetch_inscriptions.js)
+      const local = localStorage.getItem("blockNotes");
+      if (local) {
+        notes = JSON.parse(local);
+      } else {
+        // Fallback to static notes.json if nothing found
+        const res = await fetch("notes.json");
+        notes = await res.json();
+      }
+
+      const sorted = Object.entries(notes).sort((a, b) => b[0] - a[0]);
+      container.innerHTML = "";
+
+      for (const [block, note] of sorted) {
+        const tagMatch = note.message.match(/–\s(@[\w-]+|bc1\w+)/);
+        const author = tagMatch ? tagMatch[1] : "unknown";
+
+        const div = document.createElement("div");
+        div.className = "note";
+        div.innerHTML = `
+          <h2>Block ${block}</h2>
+          <p>${note.message}</p>
+          <a class="author-link" href="./?author=${author}">by ${author}</a><br>
+          <a href="https://ordinals.com/inscription/${note.inscription}" target="_blank">View Inscription</a>
+        `;
+        container.appendChild(div);
+      }
+    } catch (err) {
+      container.innerHTML = `<p style="color:red;">Failed to load feed</p>`;
+      console.error(err);
+    }
+  }
+
+  loadFeed();
+</script>
 </body>
 </html>
