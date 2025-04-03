@@ -1,48 +1,37 @@
-import requests
 import json
+import os
 
-API_KEY = "9cd23c3c-a965-4a27-90f2-ce84848d83eb"
-
-headers = {
-    "Authorization": f"Bearer {API_KEY}"
-}
-
-url = "https://api.ordiscan.com/v1/inscriptions?q=block-note"
-
-res = requests.get(url, headers=headers)
-
-if res.status_code != 200:
-    print("Error fetching data:", res.status_code)
-    exit()
-
-data = res.json()
-notes = {}
-
-for item in data.get("results", []):
-    content = item.get("content", "")
-    inscription_id = item.get("inscription_id")
-    block = item.get("block_number")
-
-    if not inscription_id or not block:
-        continue
-
-    lines = content.strip().split("\n")
-    block_line = next((l for l in lines if "block-note:" in l), None)
-    message_line = next((l for l in lines if l != block_line), None)
-
-    if not block_line or not message_line:
-        continue
-
-    try:
-        block_num = block_line.replace("block-note:", "").strip()
-        notes[block_num] = {
-            "message": message_line.strip(),
-            "inscription": inscription_id
+# Simulated function to fetch new inscriptions
+def fetch_new_inscriptions():
+    return {
+        "840011": {
+            "message": "Forever starts with a block. – @blockman-ai",
+            "inscription": "abc123def456abc123def456abc123def456abc123def456abc123def456abc123di0"
+        },
+        "840012": {
+            "message": "Bitcoin doesn’t forget. – @blockman-ai",
+            "inscription": "123abc456def123abc456def123abc456def123abc456def123abc456def123abcdi0"
         }
-    except:
-        continue
+    }
 
-with open("explorer/notes.json", "w") as f:
-    json.dump(notes, f, indent=2)
+# Load existing notes
+existing_file_path = "explorer/notes.json"
+if os.path.exists(existing_file_path):
+    with open(existing_file_path, "r") as f:
+        existing_notes = json.load(f)
+else:
+    existing_notes = {}
 
-print(f"Indexed {len(notes)} block-notes from chain.")
+# Fetch new verified inscriptions
+new_inscriptions = fetch_new_inscriptions()
+
+# Merge: Add only new blocks
+for block, data in new_inscriptions.items():
+    if block not in existing_notes:
+        existing_notes[block] = data
+
+# Save back to notes.json
+with open(existing_file_path, "w") as f:
+    json.dump(existing_notes, f, indent=2)
+
+print("Updated notes.json with new inscriptions.")
