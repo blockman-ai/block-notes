@@ -5,14 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Block Notes On-Chain</title>
 
-  <!-- ✅ Fixed bitcoinjs-lib UMD version -->
   <script src="https://unpkg.com/bitcoinjs-lib@5.2.0/dist/bitcoinjs-lib.min.js"></script>
+  <script> window.bitcoinjs = window.bitcoin; </script>
 
-  <script>
-  window.bitcoinjs = window.bitcoin;
-  </script>
-
-  <!-- 🔁 Load custom inscription logic -->
   <script src="psbt-utils.js" defer></script>
   <script src="broadcast.js" defer></script>
 
@@ -60,6 +55,14 @@
     #status {
       margin-top: 1rem;
     }
+    .inscription {
+      font-family: monospace;
+      color: #ffcc00;
+      background: #1a1a1a;
+      padding: 0.5rem;
+      border-radius: 6px;
+    }
+    ul { padding-left: 0; list-style: none; }
     .footer {
       margin-top: 3rem;
       font-size: 0.9rem;
@@ -70,14 +73,12 @@
 <body>
   <h1>Block Notes</h1>
 
-  <!-- Connect Wallet -->
   <div class="card">
     <h3>Step 1: Connect Your UniSat Wallet</h3>
     <button onclick="connectWallet()">🔗 Connect Wallet</button>
     <p id="walletAddress"></p>
   </div>
 
-  <!-- Write Note -->
   <div class="card">
     <h3>Step 2: Write Your Note</h3>
     <input id="blockInput" type="number" placeholder="Block Height (e.g. 840000)" />
@@ -85,6 +86,11 @@
     <input id="handleInput" type="text" placeholder="Your handle (optional)" />
     <button onclick="startInscribe()">📝 Inscribe</button>
     <p id="status"></p>
+  </div>
+
+  <div class="card">
+    <h3>📜 Recent Block Notes</h3>
+    <ul id="feed">Loading...</ul>
   </div>
 
   <div class="footer">Built with ❤️ on Bitcoin | Powered by UniSat & Ordinals</div>
@@ -130,6 +136,32 @@
         document.getElementById("status").innerText = "❌ Error: " + err.message;
       }
     }
+
+    async function loadRecentNotes() {
+      const feed = document.getElementById("feed");
+      feed.innerHTML = "Loading...";
+
+      try {
+        const res = await fetch("https://api.hiro.so/ordinals/v1/inscriptions?limit=15&order=desc");
+        const data = await res.json();
+
+        const notes = data.results.filter(i => i.content_type === "text/plain" && i.content?.includes("block-note:"));
+        feed.innerHTML = "";
+
+        for (let note of notes) {
+          const li = document.createElement("li");
+          li.innerHTML = `
+            <div class="inscription">${note.content.slice(0, 120)}...</div>
+            <small><a href="https://ordinals.com/inscription/${note.id}" target="_blank">View</a> • Block ${note.block_height}</small>
+          `;
+          feed.appendChild(li);
+        }
+      } catch (e) {
+        console.error(e);
+        feed.innerHTML = "Failed to load notes.";
+      }
+    }
+    loadRecentNotes();
   </script>
 </body>
 </html>
