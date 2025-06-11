@@ -1,7 +1,7 @@
 // ✅ psbt-utils.js (fixed version)
 
 async function buildPsbt(inscriptionText, userAddress) {
-  const bitcoin = bitcoinjs; // fixed reference
+  const bitcoin = window.bitcoinjs || window.bitcoin;
   const network = bitcoin.networks.bitcoin;
   const creatorAddress = "bc1qay9jnunvj087zgxgkuwd7ps5gjmnsnfczfkwlz";
   const creatorFeeSats = 546;
