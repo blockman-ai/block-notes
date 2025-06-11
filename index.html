@@ -8,6 +8,10 @@
   <!-- ✅ Fixed bitcoinjs-lib UMD version -->
   <script src="https://unpkg.com/bitcoinjs-lib@5.2.0/dist/bitcoinjs-lib.min.js"></script>
 
+  <script>
+  window.bitcoinjs = window.bitcoin;
+  </script>
+
   <!-- 🔁 Load custom inscription logic -->
   <script src="psbt-utils.js" defer></script>
   <script src="broadcast.js" defer></script>
