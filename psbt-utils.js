@@ -1,44 +1,39 @@
 // psbt-utils.js
 
-// Safe check for BitcoinJS
-if (!window.bitcoinjsReady) {
-  window.bitcoinjsReady = new Promise((resolve, reject) => {
-    let tries = 0;
-    const maxTries = 50;
-    function check() {
-      if (window.bitcoin && window.bitcoin.Psbt && window.bitcoin.networks?.bitcoin) {
-        window.bitcoinjs = window.bitcoin;
-        resolve(window.bitcoinjs);
-      } else if (tries >= maxTries) {
-        reject(new Error("BitcoinJS lib not loaded. Try refreshing the page."));
-      } else {
-        tries++;
-        setTimeout(check, 100);
-      }
+// Wait for BitcoinJS to be fully available
+window.bitcoinjsReady = new Promise((resolve, reject) => {
+  let attempts = 0;
+  const maxAttempts = 50;
+  const check = () => {
+    if (window.bitcoin && window.bitcoin.networks && window.bitcoin.Psbt) {
+      resolve(window.bitcoin);
+    } else if (++attempts >= maxAttempts) {
+      reject(new Error("BitcoinJS lib not loaded. Try refreshing the page."));
+    } else {
+      setTimeout(check, 100);
     }
-    check();
-  });
-}
+  };
+  check();
+});
 
+// Build PSBT with inscription and creator fee
 async function buildPsbt(inscriptionText, userAddress) {
   const bitcoin = await window.bitcoinjsReady;
-  if (!bitcoin?.Psbt || !bitcoin?.networks?.bitcoin) {
-    throw new Error("BitcoinJS is not fully loaded.");
-  }
-
   const network = bitcoin.networks.bitcoin;
   const creatorAddress = "bc1qay9jnunvj087zgxgkuwd7ps5gjmnsnfczfkwlz";
   const creatorFeeSats = 546;
 
-  const feeRates = await fetch("https://mempool.space/api/v1/fees/recommended").then(res => res.json());
+  // Get fee rate
+  const feeRates = await fetch("https://mempool.space/api/v1/fees/recommended").then(r => r.json());
   const feeRate = feeRates.hourFee || 20;
 
+  // Get first UTXO
   const utxos = await window.unisat.getUnspentOutputs();
   if (!utxos?.length) throw new Error("No UTXOs found.");
-
   const utxo = utxos[0];
   const inputHex = await fetch(`https://mempool.space/api/tx/${utxo.txid}/hex`).then(r => r.text());
 
+  // Construct PSBT
   const psbt = new bitcoin.Psbt({ network });
   psbt.addInput({
     hash: utxo.txid,
@@ -59,13 +54,12 @@ async function buildPsbt(inscriptionText, userAddress) {
   psbt.addOutput({ script: embed.output, value: 546 });
   psbt.addOutput({ address: creatorAddress, value: creatorFeeSats });
 
-  const totalIn = utxo.value;
   const estimatedFee = Math.ceil(200 * feeRate);
+  const totalIn = utxo.value;
   const change = totalIn - 546 - creatorFeeSats - estimatedFee;
 
-  if (change < 546) throw new Error("Insufficient funds after fees");
+  if (change < 546) throw new Error("Insufficient funds after fees.");
 
   psbt.addOutput({ address: userAddress, value: change });
-
   return psbt.toHex();
 }
