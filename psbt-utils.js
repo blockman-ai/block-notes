@@ -1,5 +1,3 @@
-// ✅ psbt-utils.js (with proper bitcoinjs-lib readiness check)
-
 async function waitForBitcoinLib() {
   return new Promise((resolve, reject) => {
     let attempts = 0;
