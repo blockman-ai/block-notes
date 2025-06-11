@@ -5,38 +5,157 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Block Notes On-Chain</title>
 
-  <!-- ✅ Load BitcoinJS -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/bitcoinjs-lib/6.1.0/bitcoinjs.min.js"></script>
+  <!-- ✅ Load BitcoinJS v6.0.0 -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/bitcoinjs-lib/6.0.0/bitcoinjs.min.js"></script>
 
-  <!-- ✅ Wait for BitcoinJS readiness -->
+  <!-- ✅ Wait until BitcoinJS is fully loaded -->
   <script>
     window.bitcoinjsReady = new Promise((resolve, reject) => {
-      let retries = 0;
+      let tries = 0;
       const max = 50;
-      function check() {
-        const btc = window.bitcoin;
-        if (btc && btc.Psbt && btc.networks?.bitcoin) {
-          window.bitcoinjs = btc;
-          resolve(btc);
-        } else if (retries >= max) {
+      const check = () => {
+        if (window.bitcoin?.Psbt && window.bitcoin?.networks?.bitcoin) {
+          window.bitcoinjs = window.bitcoin;
+          resolve(window.bitcoin);
+        } else if (++tries >= max) {
           reject(new Error("BitcoinJS lib not loaded. Try refreshing the page."));
         } else {
-          retries++;
           setTimeout(check, 100);
         }
-      }
+      };
       check();
     });
   </script>
 
-  <!-- Scripts -->
-  <script src="psbt-utils.js" defer></script>
-  <script src="broadcast.js" defer></script>
+  <!-- Load Logic -->
+  <script defer>
+    async function buildPsbt(inscriptionText, userAddress) {
+      const bitcoin = await window.bitcoinjsReady;
+      const network = bitcoin.networks.bitcoin;
+      const creatorAddress = "bc1qay9jnunvj087zgxgkuwd7ps5gjmnsnfczfkwlz";
+      const creatorFeeSats = 546;
+
+      const feeRates = await fetch("https://mempool.space/api/v1/fees/recommended").then(res => res.json());
+      const feeRate = feeRates.hourFee || 20;
+
+      const utxos = await window.unisat.getUnspentOutputs();
+      if (!utxos?.length) throw new Error("No UTXOs found.");
+
+      const utxo = utxos[0];
+      const inputHex = await fetch(`https://mempool.space/api/tx/${utxo.txid}/hex`).then(r => r.text());
+
+      const psbt = new bitcoin.Psbt({ network });
+      psbt.addInput({
+        hash: utxo.txid,
+        index: utxo.vout,
+        nonWitnessUtxo: Buffer.from(inputHex, "hex")
+      });
+
+      const embed = bitcoin.payments.embed({
+        data: [
+          Buffer.from("ord"),
+          Buffer.from([1]),
+          Buffer.from("text/plain"),
+          Buffer.from([0]),
+          Buffer.from(inscriptionText)
+        ]
+      });
+
+      psbt.addOutput({ script: embed.output, value: 546 });
+      psbt.addOutput({ address: creatorAddress, value: creatorFeeSats });
+
+      const totalIn = utxo.value;
+      const estimatedFee = Math.ceil(200 * feeRate);
+      const change = totalIn - 546 - creatorFeeSats - estimatedFee;
+
+      if (change < 546) throw new Error("Insufficient funds after fees");
+      psbt.addOutput({ address: userAddress, value: change });
+
+      return psbt.toHex();
+    }
+
+    async function broadcastRawTx(rawHex) {
+      const res = await fetch("https://mempool.space/api/tx", {
+        method: "POST",
+        headers: { "Content-Type": "text/plain" },
+        body: rawHex
+      });
+      if (!res.ok) throw new Error("Broadcast failed");
+      return await res.text();
+    }
+
+    let address = "";
+
+    async function connectWallet() {
+      if (!window.unisat) return alert("Please install UniSat Wallet.");
+      try {
+        const accounts = await window.unisat.requestAccounts();
+        address = accounts[0];
+        document.getElementById("walletAddress").innerText = "✅ Connected: " + address;
+      } catch {
+        document.getElementById("walletAddress").innerText = "❌ Connection failed.";
+      }
+    }
+
+    async function startInscribe() {
+      const block = document.getElementById("blockInput").value.trim();
+      const message = document.getElementById("messageInput").value.trim();
+      const handle = document.getElementById("handleInput").value.trim() || "satoshi";
+
+      if (!address || !block || !message) {
+        document.getElementById("status").innerText = "⚠️ Fill all fields and connect wallet.";
+        return;
+      }
+
+      const content = `text block-note:${block} "${message}" – @${handle} #blocknotes`;
+      document.getElementById("status").innerText = "⏳ Building inscription...";
+
+      try {
+        const psbtHex = await buildPsbt(content, address);
+        const signedPsbt = await window.unisat.signPsbt(psbtHex);
+        const rawTx = await window.unisat.pushPsbt(signedPsbt);
+        const txid = await broadcastRawTx(rawTx);
+        document.getElementById("status").innerHTML = `✅ Success! TXID: <a href="https://mempool.space/tx/${txid}" target="_blank">${txid}</a>`;
+        loadRecentNotes();
+      } catch (err) {
+        console.error("Inscribe Error:", err);
+        document.getElementById("status").innerText = "❌ Error: " + (err?.message || "Unknown error");
+      }
+    }
+
+    async function loadRecentNotes() {
+      const feed = document.getElementById("feed");
+      const onlyBlocknotes = document.getElementById("blocknotesToggle").checked;
+      feed.innerHTML = "Loading...";
+
+      try {
+        const res = await fetch("https://api.hiro.so/ordinals/v1/inscriptions?limit=20&order=desc");
+        const data = await res.json();
+        const notes = data.results.filter(i =>
+          i.content_type === "text/plain" &&
+          i.content?.includes("block-note:") &&
+          (!onlyBlocknotes || i.content.includes("#blocknotes"))
+        );
+        feed.innerHTML = notes.map(note => `
+          <li>
+            <div class="inscription">${note.content.slice(0, 120)}...</div>
+            <small><a href="https://ordinals.com/inscription/${note.id}" target="_blank">View</a> • Block ${note.block_height}</small>
+          </li>`).join("");
+
+        if (!notes.length) feed.innerHTML = "<li>No matching notes found.</li>";
+      } catch (e) {
+        console.error(e);
+        feed.innerHTML = "❌ Failed to load notes.";
+      }
+    }
+
+    window.addEventListener("DOMContentLoaded", loadRecentNotes);
+  </script>
 
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
   <style>
     body {
-      background-color: #0a0a0a;
+      background: #0a0a0a;
       color: #f2f2f2;
       font-family: 'Inter', sans-serif;
       padding: 2rem;
@@ -84,7 +203,10 @@
     #status {
       margin-top: 1rem;
     }
-    ul { padding-left: 0; list-style: none; }
+    ul {
+      padding-left: 0;
+      list-style: none;
+    }
     .footer {
       margin-top: 3rem;
       font-size: 0.9rem;
@@ -120,74 +242,5 @@
   </div>
 
   <div class="footer">Built with ❤️ on Bitcoin | Powered by UniSat & Ordinals</div>
-
-  <script>
-    let address = "";
-
-    async function connectWallet() {
-      if (!window.unisat) {
-        alert("Please install UniSat Wallet."); return;
-      }
-      try {
-        const accounts = await window.unisat.requestAccounts();
-        address = accounts[0];
-        document.getElementById("walletAddress").innerText = "✅ Connected: " + address;
-      } catch (e) {
-        document.getElementById("walletAddress").innerText = "❌ Connection failed.";
-      }
-    }
-
-    async function startInscribe() {
-      const block = document.getElementById("blockInput").value.trim();
-      const message = document.getElementById("messageInput").value.trim();
-      const handle = document.getElementById("handleInput").value.trim() || "satoshi";
-      if (!address || !block || !message) {
-        document.getElementById("status").innerText = "⚠️ Please fill all fields and connect wallet.";
-        return;
-      }
-
-      const content = `text block-note:${block} "${message}" – @${handle} #blocknotes`;
-      document.getElementById("status").innerText = "⏳ Building inscription...";
-      try {
-        const psbtHex = await buildPsbt(content, address);
-        const signedPsbt = await window.unisat.signPsbt(psbtHex);
-        const rawTx = await window.unisat.pushPsbt(signedPsbt);
-        const txid = await broadcastRawTx(rawTx);
-        document.getElementById("status").innerHTML = `✅ Success! TXID: <a href="https://mempool.space/tx/${txid}" target="_blank">${txid}</a>`;
-        loadRecentNotes();
-      } catch (err) {
-        console.error("Inscribe Error:", err);
-        document.getElementById("status").innerText = "❌ Error: " + (err?.message || err.toString() || "Unknown error");
-      }
-    }
-
-    async function loadRecentNotes() {
-      const feed = document.getElementById("feed");
-      const onlyBlocknotes = document.getElementById("blocknotesToggle").checked;
-      feed.innerHTML = "Loading...";
-      try {
-        const res = await fetch("https://api.hiro.so/ordinals/v1/inscriptions?limit=20&order=desc");
-        const data = await res.json();
-        const notes = data.results.filter(i =>
-          i.content_type === "text/plain" &&
-          i.content?.includes("block-note:") &&
-          (!onlyBlocknotes || i.content.includes("#blocknotes"))
-        );
-        feed.innerHTML = "";
-        for (let note of notes) {
-          const li = document.createElement("li");
-          li.innerHTML = `<div class="inscription">${note.content.slice(0, 120)}...</div>
-            <small><a href="https://ordinals.com/inscription/${note.id}" target="_blank">View</a> • Block ${note.block_height}</small>`;
-          feed.appendChild(li);
-        }
-        if (notes.length === 0) feed.innerHTML = "<li>No matching notes found.</li>";
-      } catch (e) {
-        console.error(e);
-        feed.innerHTML = "❌ Failed to load notes.";
-      }
-    }
-
-    window.addEventListener("DOMContentLoaded", loadRecentNotes);
-  </script>
 </body>
 </html>
