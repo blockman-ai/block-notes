@@ -2,19 +2,21 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Block Notes</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Block Notes On-Chain</title>
+  <script src="https://unpkg.com/bitcoinjs-lib@6.1.0/index.js"></script>
+  <script src="psbt-utils.js" defer></script>
+  <script src="broadcast.js" defer></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
   <style>
     body {
-      margin: 0;
-      font-family: 'Inter', sans-serif;
       background-color: #0a0a0a;
       color: #f2f2f2;
+      font-family: 'Inter', sans-serif;
+      padding: 2rem;
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 2rem;
     }
     h1 {
       color: #00ffff;
@@ -22,41 +24,32 @@
     }
     .card {
       background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.1);
       border-radius: 16px;
       padding: 2rem;
       margin: 1rem;
       width: 100%;
       max-width: 700px;
-      box-shadow: 0 4px 20px rgba(0, 255, 255, 0.1);
     }
-    .card p {
-      margin-bottom: 0.5rem;
-    }
-    .inscription {
-      font-family: monospace;
-      color: #ffcc00;
-      background: #1a1a1a;
-      padding: 0.5rem;
+    input, textarea {
+      width: 100%;
+      padding: 10px;
+      margin: 8px 0;
       border-radius: 8px;
+      background: #1a1a1a;
+      color: #fff;
+      border: none;
     }
     button {
       padding: 10px 20px;
-      border-radius: 8px;
       background: #00ffff;
-      color: black;
       border: none;
+      border-radius: 8px;
+      color: black;
       cursor: pointer;
       margin-top: 1rem;
     }
-    input, textarea {
-      width: 90%;
-      padding: 10px;
-      margin: 8px 0;
-      border-radius: 10px;
-      border: none;
-      background-color: #1a1a1a;
-      color: #fff;
+    #status {
+      margin-top: 1rem;
     }
     .footer {
       margin-top: 3rem;
@@ -68,73 +61,65 @@
 <body>
   <h1>Block Notes</h1>
 
-  <!-- Wallet Connect -->
+  <!-- Connect Wallet -->
   <div class="card">
     <h3>Step 1: Connect Your UniSat Wallet</h3>
     <button onclick="connectWallet()">🔗 Connect Wallet</button>
     <p id="walletAddress"></p>
   </div>
 
-  <!-- Generator Card -->
+  <!-- Write Note -->
   <div class="card">
     <h3>Step 2: Write Your Note</h3>
     <input id="blockInput" type="number" placeholder="Block Height (e.g. 840000)" />
     <textarea id="messageInput" rows="3" placeholder="Your message..."></textarea>
-    <button onclick="generateInscription()">📝 Inscribe</button>
-    <p id="outputLink" style="margin-top: 10px;"></p>
+    <input id="handleInput" type="text" placeholder="Your handle (optional)" />
+    <button onclick="startInscribe()">📝 Inscribe</button>
+    <p id="status"></p>
   </div>
 
-  <!-- Info Card -->
-  <div class="card">
-    <p><strong>Welcome to the decentralized notebook on Bitcoin.</strong></p>
-    <p>Every block is a canvas for memory, prayer, protest, or poetry.</p>
-    <p>To claim a block, inscribe a note using this format:</p>
-    <div class="inscription">
-      text block-note:840000 "Today I begin again. Thank you, Bitcoin." – @blockman-ai
-    </div>
-    <p>Then submit it via UniSat or any inscription tool and return here to display it.</p>
-  </div>
-
-  <!-- Displayed Note Example -->
-  <div class="card">
-    <p><strong>Block 840000:</strong></p>
-    <p class="inscription">Today I begin again. Thank you, Bitcoin. – @blockman-ai</p>
-    <p>Inscription ID: <span class="inscription">f529ddd9cb...d107e</span></p>
-  </div>
-
-  <!-- Footer -->
   <div class="footer">Built with ❤️ on Bitcoin | Powered by UniSat & Ordinals</div>
 
-  <!-- JavaScript -->
   <script>
-    let userAddress = "";
+    let address = "";
 
     async function connectWallet() {
       if (!window.unisat) {
-        alert("Please install UniSat Wallet to use this feature.");
+        alert("Please install UniSat Wallet.");
         return;
       }
       try {
         const accounts = await window.unisat.requestAccounts();
-        userAddress = accounts[0];
-        document.getElementById("walletAddress").innerText = "✅ Connected: " + userAddress;
-      } catch (err) {
-        console.error(err);
+        address = accounts[0];
+        document.getElementById("walletAddress").innerText = "✅ Connected: " + address;
+      } catch (e) {
         document.getElementById("walletAddress").innerText = "❌ Connection failed.";
       }
     }
 
-    function generateInscription() {
-      const block = document.getElementById('blockInput').value.trim();
-      const message = document.getElementById('messageInput').value.trim();
-      if (!block || !message) {
-        document.getElementById('outputLink').innerHTML = "<span style='color: red;'>Please enter both block and message.</span>";
+    async function startInscribe() {
+      const block = document.getElementById("blockInput").value.trim();
+      const message = document.getElementById("messageInput").value.trim();
+      const handle = document.getElementById("handleInput").value.trim() || "satoshi";
+
+      if (!address || !block || !message) {
+        document.getElementById("status").innerText = "⚠️ Please fill all fields and connect wallet.";
         return;
       }
-      const content = `text block-note:${block} "${message}" – @blockman-ai`;
-      const encoded = encodeURIComponent(content);
-      const url = `https://unisat.io/inscribe?text=${encoded}`;
-      document.getElementById('outputLink').innerHTML = `<a href="${url}" target="_blank" style="color:#00ffff;">→ Click to Inscribe via UniSat</a>`;
+
+      const content = `text block-note:${block} "${message}" – @${handle} #blocknotes`;
+      document.getElementById("status").innerText = "⏳ Building inscription...";
+
+      try {
+        const psbtHex = await buildPsbt(content, address);
+        const signedPsbt = await window.unisat.signPsbt(psbtHex);
+        const rawTx = await window.unisat.pushPsbt(signedPsbt);
+        const txid = await broadcastRawTx(rawTx);
+        document.getElementById("status").innerHTML = `✅ Success! TXID: <a href="https://mempool.space/tx/${txid}" target="_blank">${txid}</a>`;
+      } catch (err) {
+        console.error(err);
+        document.getElementById("status").innerText = "❌ Error: " + err.message;
+      }
     }
   </script>
 </body>
