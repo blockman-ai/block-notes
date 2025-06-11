@@ -4,9 +4,14 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Block Notes On-Chain</title>
+
+  <!-- ✅ Fixed bitcoinjs-lib UMD version -->
   <script src="https://unpkg.com/bitcoinjs-lib@5.2.0/dist/bitcoinjs-lib.min.js"></script>
+
+  <!-- 🔁 Load custom inscription logic -->
   <script src="psbt-utils.js" defer></script>
   <script src="broadcast.js" defer></script>
+
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
   <style>
     body {
