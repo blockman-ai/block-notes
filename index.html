@@ -2,24 +2,25 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Block Notes</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Block Notes On-Chain</title>
 
-  <!-- ✅ BitcoinJS MUST load FIRST -->
+  <!-- ✅ Load BitcoinJS Library -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/bitcoinjs-lib/6.1.0/bitcoinjs.min.js"></script>
-  
-  <!-- ✅ Init Promise when loaded -->
+
+  <!-- ✅ Ensure BitcoinJS is ready -->
   <script>
     window.bitcoinjsReady = new Promise((resolve, reject) => {
-      const maxTries = 50;
+      const maxRetries = 50;
       let tries = 0;
       const check = () => {
-        if (window.bitcoin && bitcoin.Psbt && bitcoin.networks) {
-          window.bitcoinjs = bitcoin;
+        if (window.bitcoin && window.bitcoin.networks?.bitcoin && window.bitcoin.Psbt) {
+          window.bitcoinjs = window.bitcoin;
           resolve(window.bitcoinjs);
-        } else if (tries++ >= maxTries) {
-          reject("BitcoinJS lib not loaded. Try refreshing the page.");
+        } else if (tries >= maxRetries) {
+          reject(new Error("BitcoinJS lib not loaded. Try refreshing the page."));
         } else {
+          tries++;
           setTimeout(check, 100);
         }
       };
@@ -27,11 +28,6 @@
     });
   </script>
 
-  <!-- ✅ Your JS files (they wait on bitcoinjsReady) -->
-  <script src="psbt-utils.js" defer></script>
-  <script src="broadcast.js" defer></script>
-
-  <!-- ✅ Fonts + Style -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
   <style>
     body {
@@ -45,6 +41,7 @@
     }
     h1 {
       color: #00ffff;
+      font-size: 2.5rem;
     }
     .card {
       background: rgba(255, 255, 255, 0.05);
@@ -82,7 +79,7 @@
     #status {
       margin-top: 1rem;
     }
-    ul { list-style: none; padding-left: 0; }
+    ul { padding-left: 0; list-style: none; }
     .footer {
       margin-top: 3rem;
       font-size: 0.9rem;
@@ -94,13 +91,13 @@
   <h1>Block Notes</h1>
 
   <div class="card">
-    <h3>1. Connect Your UniSat Wallet</h3>
+    <h3>Step 1: Connect Your UniSat Wallet</h3>
     <button onclick="connectWallet()">🔗 Connect Wallet</button>
     <p id="walletAddress"></p>
   </div>
 
   <div class="card">
-    <h3>2. Write a Note</h3>
+    <h3>Step 2: Write Your Note</h3>
     <input id="blockInput" type="number" placeholder="Block Height (e.g. 840000)" />
     <textarea id="messageInput" rows="3" placeholder="Your message..."></textarea>
     <input id="handleInput" type="text" placeholder="Your handle (optional)" />
@@ -150,17 +147,74 @@
       document.getElementById("status").innerText = "⏳ Building inscription...";
 
       try {
-        await window.bitcoinjsReady;
         const psbtHex = await buildPsbt(content, address);
         const signedPsbt = await window.unisat.signPsbt(psbtHex);
         const rawTx = await window.unisat.pushPsbt(signedPsbt);
         const txid = await broadcastRawTx(rawTx);
-        document.getElementById("status").innerHTML = `✅ TXID: <a href="https://mempool.space/tx/${txid}" target="_blank">${txid}</a>`;
+        document.getElementById("status").innerHTML = `✅ Success! TXID: <a href="https://mempool.space/tx/${txid}" target="_blank">${txid}</a>`;
         loadRecentNotes();
       } catch (err) {
-        console.error(err);
-        document.getElementById("status").innerText = "❌ Error: " + err.message;
+        console.error("Inscribe Error:", err);
+        document.getElementById("status").innerText =
+          "❌ Error: " + (err?.message || err.toString() || "Unknown error");
       }
+    }
+
+    async function buildPsbt(inscriptionText, userAddress) {
+      const bitcoin = await window.bitcoinjsReady;
+      const network = bitcoin.networks.bitcoin;
+
+      const creatorAddress = "bc1qay9jnunvj087zgxgkuwd7ps5gjmnsnfczfkwlz";
+      const creatorFeeSats = 546;
+
+      const feeRates = await fetch("https://mempool.space/api/v1/fees/recommended").then(res => res.json());
+      const feeRate = feeRates.hourFee;
+
+      const utxos = await window.unisat.getUnspentOutputs();
+      if (!utxos || utxos.length === 0) throw new Error("No UTXOs found");
+
+      const utxo = utxos[0];
+      const inputHex = await fetch(`https://mempool.space/api/tx/${utxo.txid}/hex`).then(r => r.text());
+
+      const psbt = new bitcoin.Psbt({ network });
+      psbt.addInput({
+        hash: utxo.txid,
+        index: utxo.vout,
+        nonWitnessUtxo: Buffer.from(inputHex, "hex")
+      });
+
+      const embed = bitcoin.payments.embed({
+        data: [
+          Buffer.from("ord"),
+          Buffer.from([1]),
+          Buffer.from("text/plain"),
+          Buffer.from([0]),
+          Buffer.from(inscriptionText)
+        ]
+      });
+
+      psbt.addOutput({ script: embed.output, value: 546 });
+      psbt.addOutput({ address: creatorAddress, value: creatorFeeSats });
+
+      const totalIn = utxo.value;
+      const estimatedFee = 200 * feeRate;
+      const change = totalIn - 546 - creatorFeeSats - estimatedFee;
+
+      if (change < 546) throw new Error("Insufficient funds after fees");
+
+      psbt.addOutput({ address: userAddress, value: change });
+
+      return psbt.toHex();
+    }
+
+    async function broadcastRawTx(rawTxHex) {
+      const res = await fetch("https://mempool.space/api/tx", {
+        method: "POST",
+        headers: { "Content-Type": "text/plain" },
+        body: rawTxHex
+      });
+      if (!res.ok) throw new Error("Broadcast failed");
+      return await res.text();
     }
 
     async function loadRecentNotes() {
