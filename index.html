@@ -5,9 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Block Notes On-Chain</title>
 
+  <!-- ✅ Load BitcoinJS v6.0.0 from CDN -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/bitcoinjs-lib/6.0.0/bitcoinjs.min.js"></script>
 
-  <!-- ✅ Wait until BitcoinJS is fully ready -->
+  <!-- ✅ Wait until BitcoinJS is fully loaded -->
   <script>
     window.bitcoinjsReady = new Promise((resolve, reject) => {
       let tries = 0;
@@ -17,7 +18,7 @@
           window.bitcoinjs = bitcoin;
           resolve(bitcoin);
         } else if (++tries > maxTries) {
-          reject(new Error("BitcoinJS (v5.2.0) not loaded. Try refreshing the page."));
+          reject(new Error("BitcoinJS lib not loaded. Try refreshing the page."));
         } else {
           setTimeout(check, 100);
         }
@@ -26,10 +27,7 @@
     });
   </script>
 
-  <!-- App Logic -->
-  <script src="psbt-utils.js" defer></script>
-  <script src="broadcast.js" defer></script>
-
+  <!-- Fonts & Styling -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
   <style>
     body {
@@ -118,6 +116,11 @@
 
   <div class="footer">Built with ❤️ on Bitcoin | Powered by UniSat & Ordinals</div>
 
+  <!-- ✅ Load App Logic After Page Load -->
+  <script src="psbt-utils.js" defer></script>
+  <script src="broadcast.js" defer></script>
+
+  <!-- ✅ Core Client Logic -->
   <script>
     let address = "";
 
