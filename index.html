@@ -5,23 +5,37 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Block Notes On-Chain</title>
 
-  <!-- ✅ Fixed bitcoinjs-lib UMD version -->
+  <!-- ✅ Load bitcoinjs-lib -->
   <script src="https://unpkg.com/bitcoinjs-lib@5.2.0/dist/bitcoinjs-lib.min.js"></script>
+
+  <!-- ✅ Wait for bitcoinjs-lib to fully load -->
   <script>
-  window.bitcoinjs = undefined;
-  const interval = setInterval(() => {
-    if (window.bitcoin && window.bitcoin.networks) {
-      window.bitcoinjs = window.bitcoin;
-      clearInterval(interval);
-    }
-  }, 100);
-</script>
+    window.bitcoinjsReady = new Promise((resolve, reject) => {
+      const maxRetries = 50;
+      let tries = 0;
+      const check = () => {
+        if (window.bitcoin && window.bitcoin.networks?.bitcoin && window.bitcoin.Psbt) {
+          window.bitcoinjs = window.bitcoin;
+          resolve(window.bitcoinjs);
+        } else if (tries >= maxRetries) {
+          reject("BitcoinJS lib not loaded. Try refreshing the page.");
+        } else {
+          tries++;
+          setTimeout(check, 100);
+        }
+      };
+      check();
+    });
+  </script>
 
   <!-- Custom JS -->
   <script src="psbt-utils.js" defer></script>
   <script src="broadcast.js" defer></script>
 
+  <!-- Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+
+  <!-- Styles -->
   <style>
     body {
       background-color: #0a0a0a;
@@ -80,15 +94,18 @@
     }
   </style>
 </head>
+
 <body>
   <h1>Block Notes</h1>
 
+  <!-- Wallet Connect -->
   <div class="card">
     <h3>Step 1: Connect Your UniSat Wallet</h3>
     <button onclick="connectWallet()">🔗 Connect Wallet</button>
     <p id="walletAddress"></p>
   </div>
 
+  <!-- Write Note -->
   <div class="card">
     <h3>Step 2: Write Your Note</h3>
     <input id="blockInput" type="number" placeholder="Block Height (e.g. 840000)" />
@@ -98,6 +115,7 @@
     <p id="status"></p>
   </div>
 
+  <!-- Note Feed -->
   <div class="card">
     <h3>📜 Recent Block Notes</h3>
     <label>
@@ -107,8 +125,10 @@
     <ul id="feed">Loading...</ul>
   </div>
 
+  <!-- Footer -->
   <div class="footer">Built with ❤️ on Bitcoin | Powered by UniSat & Ordinals</div>
 
+  <!-- App Logic -->
   <script>
     let address = "";
 
@@ -145,7 +165,7 @@
         const rawTx = await window.unisat.pushPsbt(signedPsbt);
         const txid = await broadcastRawTx(rawTx);
         document.getElementById("status").innerHTML = `✅ Success! TXID: <a href="https://mempool.space/tx/${txid}" target="_blank">${txid}</a>`;
-        loadRecentNotes(); // reload notes after inscribing
+        loadRecentNotes();
       } catch (err) {
         console.error(err);
         document.getElementById("status").innerText = "❌ Error: " + err.message;
@@ -186,7 +206,6 @@
       }
     }
 
-    // Load feed on page load
     window.addEventListener("DOMContentLoaded", loadRecentNotes);
   </script>
 </body>
