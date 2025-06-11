@@ -13,7 +13,6 @@
     window.bitcoinjsReady = new Promise((resolve, reject) => {
       const maxTries = 50;
       let tries = 0;
-
       const check = () => {
         if (typeof bitcoin !== "undefined" && bitcoin?.Psbt && bitcoin?.networks?.bitcoin) {
           window.bitcoinjs = bitcoin;
