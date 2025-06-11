@@ -1,3 +1,5 @@
+// broadcast.js
+
 async function broadcastRawTx(rawTxHex) {
   const res = await fetch("https://mempool.space/api/tx", {
     method: "POST",
@@ -6,10 +8,9 @@ async function broadcastRawTx(rawTxHex) {
   });
 
   if (!res.ok) {
-    const errorText = await res.text();
-    throw new Error("Broadcast failed: " + errorText);
+    const text = await res.text();
+    throw new Error(`Broadcast failed: ${text}`);
   }
 
-  const txid = await res.text();
-  return txid;
+  return await res.text(); // returns txid
 }
