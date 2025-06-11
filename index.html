@@ -6,8 +6,7 @@
   <title>Block Notes On-Chain</title>
 
   <script src="https://unpkg.com/bitcoinjs-lib@5.2.0/dist/bitcoinjs-lib.min.js"></script>
-  <script> window.bitcoinjs = window.bitcoin; </script>
-
+  <script>window.bitcoinjs = window.bitcoin;</script>
   <script src="psbt-utils.js" defer></script>
   <script src="broadcast.js" defer></script>
 
@@ -89,13 +88,13 @@
   </div>
 
   <div class="card">
-  <h3>📜 Recent Block Notes</h3>
-  <label>
-    <input type="checkbox" id="blocknotesToggle" onchange="loadRecentNotes()" checked />
-    Only show #blocknotes
-  </label>
-  <ul id="feed">Loading...</ul>
-</div>
+    <h3>📜 Recent Block Notes</h3>
+    <label>
+      <input type="checkbox" id="blocknotesToggle" onchange="loadRecentNotes()" checked />
+      Only show #blocknotes
+    </label>
+    <ul id="feed">Loading...</ul>
+  </div>
 
   <div class="footer">Built with ❤️ on Bitcoin | Powered by UniSat & Ordinals</div>
 
@@ -143,28 +142,39 @@
 
     async function loadRecentNotes() {
       const feed = document.getElementById("feed");
+      const onlyBlocknotes = document.getElementById("blocknotesToggle").checked;
       feed.innerHTML = "Loading...";
 
       try {
-        const res = await fetch("https://api.hiro.so/ordinals/v1/inscriptions?limit=15&order=desc");
+        const res = await fetch("https://api.hiro.so/ordinals/v1/inscriptions?limit=20&order=desc");
         const data = await res.json();
 
-        const notes = data.results.filter(i => i.content_type === "text/plain" && i.content?.includes("block-note:"));
-        feed.innerHTML = "";
+        const notes = data.results.filter(i =>
+          i.content_type === "text/plain" &&
+          i.content?.includes("block-note:") &&
+          (!onlyBlocknotes || i.content.includes("#blocknotes"))
+        );
 
+        feed.innerHTML = "";
         for (let note of notes) {
           const li = document.createElement("li");
           li.innerHTML = `
-            <div class="inscription">${note.content.slice(0, 120)}...</div>
+            <div class="inscription">${note.content?.slice(0, 120) || '[No content]'}</div>
             <small><a href="https://ordinals.com/inscription/${note.id}" target="_blank">View</a> • Block ${note.block_height}</small>
           `;
           feed.appendChild(li);
         }
+
+        if (notes.length === 0) {
+          feed.innerHTML = "<li>No matching notes found.</li>";
+        }
       } catch (e) {
         console.error(e);
-        feed.innerHTML = "Failed to load notes.";
+        feed.innerHTML = "❌ Failed to load notes.";
       }
     }
+
+    // Auto-load on page open
     loadRecentNotes();
   </script>
 </body>
