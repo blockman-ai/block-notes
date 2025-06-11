@@ -2,23 +2,22 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Block Notes On-Chain</title>
 
-  <!-- ✅ BitcoinJS UMD version -->
-  <script src="https://unpkg.com/bitcoinjs-lib@5.2.0/dist/bitcoinjs-lib.min.js"></script>
-
-  <!-- ✅ Wait for BitcoinJS to load properly -->
+  <!-- ✅ Load BitcoinJS-lib first -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/bitcoinjs-lib/6.0.0/bitcoinjs.min.js"></script>
   <script>
+    // Safe check: expose bitcoinjs only when fully loaded
     window.bitcoinjsReady = new Promise((resolve, reject) => {
-      let tries = 0;
-      const maxTries = 50;
+      let attempts = 0;
+      const maxAttempts = 50;
       const check = () => {
-        if (window.bitcoin && window.bitcoin.networks && window.bitcoin.Psbt) {
-          window.bitcoinjs = window.bitcoin;
-          resolve(window.bitcoinjs);
-        } else if (++tries >= maxTries) {
-          reject("BitcoinJS lib not loaded. Try refreshing the page.");
+        if (window.bitcoin && bitcoin.networks && bitcoin.Psbt) {
+          window.bitcoinjs = bitcoin;
+          resolve(bitcoinjs);
+        } else if (++attempts >= maxAttempts) {
+          reject(new Error("BitcoinJS lib not loaded. Try refreshing the page."));
         } else {
           setTimeout(check, 100);
         }
@@ -27,7 +26,7 @@
     });
   </script>
 
-  <!-- Custom scripts -->
+  <!-- Custom JS Files -->
   <script src="psbt-utils.js" defer></script>
   <script src="broadcast.js" defer></script>
 
@@ -150,6 +149,7 @@
       document.getElementById("status").innerText = "⏳ Building inscription...";
 
       try {
+        const bitcoin = await window.bitcoinjsReady;
         const psbtHex = await buildPsbt(content, address);
         const signedPsbt = await window.unisat.signPsbt(psbtHex);
         const rawTx = await window.unisat.pushPsbt(signedPsbt);
