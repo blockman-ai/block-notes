@@ -40,28 +40,47 @@
       padding: 0.5rem;
       border-radius: 8px;
     }
+    button {
+      padding: 10px 20px;
+      border-radius: 8px;
+      background: #00ffff;
+      color: black;
+      border: none;
+      cursor: pointer;
+      margin-top: 1rem;
+    }
+    input, textarea {
+      width: 90%;
+      padding: 10px;
+      margin: 8px 0;
+      border-radius: 10px;
+      border: none;
+      background-color: #1a1a1a;
+      color: #fff;
+    }
     .footer {
       margin-top: 3rem;
       font-size: 0.9rem;
       color: #888;
-    }
-    button {
-      cursor: pointer;
     }
   </style>
 </head>
 <body>
   <h1>Block Notes</h1>
 
+  <!-- Wallet Connect -->
+  <div class="card">
+    <h3>Step 1: Connect Your UniSat Wallet</h3>
+    <button onclick="connectWallet()">🔗 Connect Wallet</button>
+    <p id="walletAddress"></p>
+  </div>
+
   <!-- Generator Card -->
   <div class="card">
-    <h3>Inscribe Your Block Note</h3>
-    <input id="blockInput" type="number" placeholder="Block Height" style="width: 90%; margin: 8px; padding: 10px; border-radius: 10px;" />
-    <textarea id="messageInput" rows="3" placeholder="Your message..." style="width: 90%; padding: 10px; border-radius: 10px;"></textarea>
-    <br/>
-    <button onclick="generateInscription()" style="margin-top: 10px; padding: 10px 20px; border-radius: 8px; background: #00ffff; color: black; border: none;">
-      Generate UniSat Link
-    </button>
+    <h3>Step 2: Write Your Note</h3>
+    <input id="blockInput" type="number" placeholder="Block Height (e.g. 840000)" />
+    <textarea id="messageInput" rows="3" placeholder="Your message..."></textarea>
+    <button onclick="generateInscription()">📝 Inscribe</button>
     <p id="outputLink" style="margin-top: 10px;"></p>
   </div>
 
@@ -83,16 +102,28 @@
     <p>Inscription ID: <span class="inscription">f529ddd9cb...d107e</span></p>
   </div>
 
-  <!-- Notes Container -->
-  <div id="notes-container"></div>
-
   <!-- Footer -->
-  <div class="footer">
-    Built with ❤️ on Bitcoin | Powered by Ordinals & Runes
-  </div>
+  <div class="footer">Built with ❤️ on Bitcoin | Powered by UniSat & Ordinals</div>
 
-  <!-- Script to Generate Link -->
+  <!-- JavaScript -->
   <script>
+    let userAddress = "";
+
+    async function connectWallet() {
+      if (!window.unisat) {
+        alert("Please install UniSat Wallet to use this feature.");
+        return;
+      }
+      try {
+        const accounts = await window.unisat.requestAccounts();
+        userAddress = accounts[0];
+        document.getElementById("walletAddress").innerText = "✅ Connected: " + userAddress;
+      } catch (err) {
+        console.error(err);
+        document.getElementById("walletAddress").innerText = "❌ Connection failed.";
+      }
+    }
+
     function generateInscription() {
       const block = document.getElementById('blockInput').value.trim();
       const message = document.getElementById('messageInput').value.trim();
@@ -100,15 +131,11 @@
         document.getElementById('outputLink').innerHTML = "<span style='color: red;'>Please enter both block and message.</span>";
         return;
       }
-      const text = `text block-note:${block} "${message}" – @blockman-ai`;
-      const encoded = encodeURIComponent(text);
+      const content = `text block-note:${block} "${message}" – @blockman-ai`;
+      const encoded = encodeURIComponent(content);
       const url = `https://unisat.io/inscribe?text=${encoded}`;
-      document.getElementById('outputLink').innerHTML = `<a href="${url}" target="_blank" style="color:#00ffff;">Inscribe via UniSat →</a>`;
+      document.getElementById('outputLink').innerHTML = `<a href="${url}" target="_blank" style="color:#00ffff;">→ Click to Inscribe via UniSat</a>`;
     }
   </script>
-
-  <!-- Optional: External script to load notes dynamically -->
-  <!-- <script src="scripts/load_notes.js"></script> -->
 </body>
 </html>
-
