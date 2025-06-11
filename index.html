@@ -89,9 +89,13 @@
   </div>
 
   <div class="card">
-    <h3>📜 Recent Block Notes</h3>
-    <ul id="feed">Loading...</ul>
-  </div>
+  <h3>📜 Recent Block Notes</h3>
+  <label>
+    <input type="checkbox" id="blocknotesToggle" onchange="loadRecentNotes()" checked />
+    Only show #blocknotes
+  </label>
+  <ul id="feed">Loading...</ul>
+</div>
 
   <div class="footer">Built with ❤️ on Bitcoin | Powered by UniSat & Ordinals</div>
 
