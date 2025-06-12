@@ -5,24 +5,24 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Block Notes On-Chain</title>
 
-  <!-- ✅ BitcoinJS v6.1.0 -->
-  <script src="https://cdn.jsdelivr.net/npm/bitcoinjs-lib@6.1.0/dist/bitcoinjs-lib.min.js"></script>
+  <!-- ✅ BitcoinJS v5.2.0 via UMD (most compatible) -->
+  <script src="https://unpkg.com/bitcoinjs-lib@5.2.0/dist/bitcoinjs-lib.min.js"></script>
 
+  <!-- ✅ Ensure BitcoinJS is loaded -->
   <script>
-    // ✅ Wait until BitcoinJS is fully ready
     window.bitcoinjsReady = new Promise((resolve, reject) => {
       let tries = 0;
       const maxTries = 50;
-      function check() {
+      const check = () => {
         if (window.bitcoin && bitcoin.Psbt && bitcoin.networks?.bitcoin) {
           window.bitcoinjs = bitcoin;
           resolve(bitcoin);
-        } else if (++tries > maxTries) {
-          reject(new Error("BitcoinJS (v6.1.0) not loaded. Try refreshing the page."));
+        } else if (++tries >= maxTries) {
+          reject(new Error("BitcoinJS (v5.2.0) not loaded. Try refreshing the page."));
         } else {
           setTimeout(check, 100);
         }
-      }
+      };
       check();
     });
   </script>
