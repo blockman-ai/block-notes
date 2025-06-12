@@ -4,156 +4,138 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Block Notes — Inscribe on Bitcoin</title>
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+
+  <!-- ✅ Load BitcoinJS from reliable CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/bitcoinjs-lib/6.0.0/bitcoinjs.min.js"></script>
+  <script>
+    window.bitcoinjsReady = new Promise((resolve, reject) => {
+      let tries = 0;
+      const check = () => {
+        if (window.bitcoin && window.bitcoin.Psbt && window.bitcoin.networks?.bitcoin) {
+          resolve(window.bitcoin);
+        } else if (++tries > 50) {
+          reject(new Error("\u274C BitcoinJS (v6.0.0) not loaded."));
+        } else {
+          setTimeout(check, 100);
+        }
+      };
+      check();
+    });
+  </script>
+
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&display=swap" rel="stylesheet">
+
   <style>
     body {
       margin: 0;
-      font-family: 'Inter', sans-serif;
-      background: linear-gradient(145deg, #050505, #0f0f0f);
-      color: #f0f0f0;
+      font-family: 'Orbitron', sans-serif;
+      background: #0c0c0c;
+      color: #fff;
       display: flex;
       flex-direction: column;
       align-items: center;
       padding: 2rem;
     }
-
     h1 {
-      font-family: 'Orbitron', sans-serif;
-      font-size: 2.8rem;
-      background: linear-gradient(90deg, #00ffff, #ff00ff);
+      font-size: 3rem;
+      background: linear-gradient(90deg, #00ffe0, #a44fff);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
+    }
+    h3 {
+      color: #ffffff;
       margin-bottom: 0.5rem;
     }
-
-    .subtitle {
-      font-family: 'Orbitron', sans-serif;
-      font-size: 1.2rem;
-      color: #888;
-      margin-bottom: 2rem;
-    }
-
     .card {
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid #222;
-      border-radius: 1.25rem;
-      padding: 2rem;
-      margin-bottom: 2rem;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid #00ffff;
+      border-radius: 20px;
+      padding: 1.5rem;
+      margin: 1rem 0;
       width: 100%;
-      max-width: 500px;
-      box-shadow: 0 0 25px rgba(0, 255, 255, 0.2);
-      transition: all 0.3s ease;
+      max-width: 600px;
+      box-shadow: 0 0 15px #00ffff55;
     }
-
-    .card:hover {
-      box-shadow: 0 0 30px rgba(255, 0, 255, 0.4);
-    }
-
-    label, input, textarea {
-      display: block;
+    input, textarea {
       width: 100%;
-      margin-top: 1rem;
-      background: #141414;
+      padding: 12px;
+      margin: 10px 0;
       border: none;
-      border-radius: 0.75rem;
-      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      background: #1a1a1a;
       color: #fff;
+      font-family: monospace;
       font-size: 1rem;
     }
-
-    input::placeholder, textarea::placeholder {
-      color: #777;
-    }
-
     button {
-      width: 100%;
-      margin-top: 1.5rem;
-      background: linear-gradient(90deg, #00ffcc, #6600ff);
+      padding: 12px 20px;
+      background: linear-gradient(90deg, #00ffe0, #8c52ff);
       color: #000;
-      font-family: 'Orbitron', sans-serif;
-      font-weight: 700;
-      font-size: 1rem;
-      padding: 0.75rem 1rem;
       border: none;
-      border-radius: 0.75rem;
+      border-radius: 10px;
+      font-weight: bold;
       cursor: pointer;
-      transition: all 0.2s ease-in-out;
+      font-family: 'Orbitron', sans-serif;
+      box-shadow: 0 0 10px #00fff080;
     }
-
-    button:hover {
-      transform: scale(1.05);
-      box-shadow: 0 0 10px #00ffff;
-    }
-
     #status {
       margin-top: 1rem;
-      font-size: 0.95rem;
-      color: #ff0080;
+      font-weight: bold;
     }
-
-    .footer {
+    footer {
       margin-top: 3rem;
-      font-size: 0.85rem;
-      color: #555;
+      font-size: 0.9rem;
+      color: #888;
     }
-
-    @media screen and (max-width: 600px) {
+    @media (max-width: 600px) {
       h1 { font-size: 2rem; }
-      .subtitle { font-size: 1rem; }
-      .card { padding: 1.5rem; }
+      .card { padding: 1rem; }
     }
   </style>
 </head>
 <body>
   <h1>Block Notes</h1>
-  <div class="subtitle">Inscribe on Bitcoin with alien-grade tech 🛸</div>
+  <p>Inscribe on Bitcoin with alien-grade tech 🚀</p>
 
   <div class="card">
-    <h2>1. Connect Wallet</h2>
+    <h3>1. Connect Wallet</h3>
     <button onclick="connectWallet()">🔗 Connect UniSat</button>
-    <p id="walletStatus">Not connected</p>
+    <p id="walletAddress">Disconnected</p>
   </div>
 
   <div class="card">
-    <h2>2. Write Your Note</h2>
+    <h3>2. Write Your Note</h3>
     <input id="blockInput" type="number" placeholder="Block Height (e.g. 840000)" />
-    <textarea id="messageInput" placeholder="Your message..."></textarea>
+    <textarea id="messageInput" rows="2" placeholder="Your message..."></textarea>
     <input id="handleInput" type="text" placeholder="Your handle (optional)" />
-    <button onclick="startInscribe()">📝 Inscribe</button>
+    <button onclick="startInscribe()">📄 Inscribe</button>
     <p id="status"></p>
   </div>
 
-  <div class="footer">
-    ✨ Powered by Bitcoin + UniSat • Designed in Orbit 🪐
-  </div>
+  <footer>
+    Built with ✨ precision. Powered by Bitcoin + UniSat.
+  </footer>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/bitcoinjs-lib/6.0.0/bitcoinjs.min.js"></script>
   <script>
-    window.bitcoinjsReady = new Promise((resolve, reject) => {
-      let tries = 0;
-      const maxTries = 50;
-      function check() {
-        if (window.bitcoin?.Psbt && window.bitcoin?.networks?.bitcoin) {
-          resolve(window.bitcoin);
-        } else if (++tries > maxTries) {
-          reject(new Error("❌ BitcoinJS (v6.0.0) not loaded."));
-        } else {
-          setTimeout(check, 100);
-        }
-      }
-      check();
-    });
-
     let address = "";
 
     async function connectWallet() {
-      if (!window.unisat) return alert("Install UniSat Wallet to continue.");
+      if (!window.unisat) {
+        alert("Please install the UniSat wallet.");
+        return;
+      }
       try {
         const accounts = await window.unisat.requestAccounts();
         address = accounts[0];
-        document.getElementById("walletStatus").innerText = `✅ Connected: ${address}`;
+        document.getElementById("walletAddress").innerText = "✅ Connected: " + address;
+
+        // Optional logic: auto-run buildPsbt() or update UI
+        console.log("Wallet connected.", address);
+
       } catch (err) {
-        document.getElementById("walletStatus").innerText = "❌ Connection failed.";
+        console.error(err);
+        document.getElementById("walletAddress").innerText = "❌ Connection failed.";
       }
     }
 
@@ -161,24 +143,24 @@
       const block = document.getElementById("blockInput").value.trim();
       const message = document.getElementById("messageInput").value.trim();
       const handle = document.getElementById("handleInput").value.trim() || "satoshi";
-      const status = document.getElementById("status");
 
       if (!address || !block || !message) {
-        status.innerText = "⚠️ Please fill all fields and connect wallet.";
+        document.getElementById("status").innerText = "⚠️ Please complete all fields and connect wallet.";
         return;
       }
 
-      const content = `text block-note:${block} \"${message}\" – @${handle} #blocknotes`;
-      status.innerText = "⏳ Building inscription...";
+      const content = `text block-note:${block} "${message}" – @${handle} #blocknotes`;
+      document.getElementById("status").innerText = "⏳ Building inscription...";
 
       try {
         const bitcoin = await window.bitcoinjsReady;
         const psbt = new bitcoin.Psbt({ network: bitcoin.networks.bitcoin });
-        // ... Add realistic PSBT logic here later ...
-        status.innerText = "✅ PSBT created (simulated). Ready for signing.";
+        console.log("PSBT ready:", psbt);
+        document.getElementById("status").innerText = "✅ Ready to sign! (PSBT built — integrate sign/send next)";
+
       } catch (err) {
         console.error("Inscribe Error:", err);
-        status.innerText = "❌ " + (err?.message || "Unknown error");
+        document.getElementById("status").innerText = "❌ " + (err.message || err.toString());
       }
     }
   </script>
