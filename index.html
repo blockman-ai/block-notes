@@ -2,24 +2,24 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>BitcoinJS v5.2.0 UMD Working Test</title>
+  <title>✅ BitcoinJS v6.0.0 Working Demo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <!-- ✅ Correct working CDN -->
-  <script src="https://unpkg.com/bitcoinjs-lib@5.2.0/dist/bitcoinjs-lib.umd.js"></script>
+  <!-- ✅ Load BitcoinJS v6 from CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/bitcoinjs-lib/6.0.0/bitcoinjs.min.js"></script>
 
-  <!-- ✅ Confirm load and wait -->
+  <!-- ✅ Ensure window.bitcoin is ready -->
   <script>
     window.bitcoinjsReady = new Promise((resolve, reject) => {
-      let attempts = 0;
+      let tries = 0;
       const max = 50;
 
       function check() {
-        if (window['bitcoinjs-lib']?.Psbt) {
-          window.bitcoin = window['bitcoinjs-lib'];
+        if (window.bitcoin && window.bitcoin.Psbt) {
+          console.log("✅ BitcoinJS loaded.");
           resolve(window.bitcoin);
-        } else if (++attempts >= max) {
-          reject(new Error("BitcoinJS (v5.2.0) not loaded. Try refreshing."));
+        } else if (++tries > max) {
+          reject(new Error("❌ BitcoinJS (v6.0.0) not loaded."));
         } else {
           setTimeout(check, 100);
         }
@@ -31,45 +31,48 @@
 
   <style>
     body {
-      background: #0a0a0a;
-      color: lime;
+      background: #000;
+      color: #00ff00;
       font-family: monospace;
       text-align: center;
-      padding: 2rem;
+      padding-top: 3rem;
     }
     button {
-      background: #00ffff;
-      border: none;
       padding: 1rem 2rem;
-      border-radius: 5px;
+      background: #00ffff;
       color: black;
       font-weight: bold;
+      border: none;
+      border-radius: 5px;
       cursor: pointer;
     }
     #status {
-      color: red;
-      margin-top: 1.5rem;
+      margin-top: 2rem;
+      color: #ff5555;
+    }
+    .success {
+      color: #00ff00;
     }
   </style>
 </head>
 <body>
-  <h1>BitcoinJS v5.2.0 - UMD WORKING TEST</h1>
-  <button onclick="testBitcoin()">Test BitcoinJS</button>
-  <div id="status"></div>
+  <h1>BitcoinJS v6.0.0 — LIVE WORKING TEST</h1>
+  <button onclick="testBitcoinJs()">Test BitcoinJS</button>
+  <div id="status">Waiting...</div>
 
   <script>
-    async function testBitcoin() {
+    async function testBitcoinJs() {
       const status = document.getElementById("status");
       try {
         const bitcoin = await window.bitcoinjsReady;
         const psbt = new bitcoin.Psbt({ network: bitcoin.networks.bitcoin });
-        console.log("✅ PSBT initialized:", psbt);
-        status.innerHTML = "✅ BitcoinJS loaded and PSBT created successfully!";
-        status.style.color = "lime";
+        console.log("✅ PSBT created", psbt);
+        status.textContent = "✅ BitcoinJS loaded and PSBT created!";
+        status.className = "success";
       } catch (err) {
-        console.error("❌ BitcoinJS Test Error:", err);
-        status.innerHTML = `❌ Error: ${err.message}`;
-        status.style.color = "red";
+        console.error("❌ Error:", err);
+        status.textContent = "❌ " + err.message;
+        status.className = "";
       }
     }
   </script>
