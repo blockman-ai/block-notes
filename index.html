@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
   <title>Block Notes — Inscribe on Bitcoin</title>
 
+  <!-- ✅ Loads v5.2.0 of BitcoinJS under window.bitcoinjsLib -->
   <script src="https://unpkg.com/bitcoinjs-lib@5.2.0/dist/bitcoinjs.min.js"></script>
 
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
@@ -97,24 +98,6 @@
   </div>
 
   <script>
-    let bitcoin = null;
-
-    window.bitcoinjsReady = new Promise((resolve, reject) => {
-      let tries = 0, max = 50;
-      const check = () => {
-        try {
-          bitcoin = window.bitcoinjs || window['bitcoinjs-lib'] || window.bitcoin || undefined;
-          if (bitcoin?.Psbt && bitcoin.networks?.bitcoin) resolve(bitcoin);
-          else if (++tries > max) reject(new Error("BitcoinJS not loaded."));
-          else setTimeout(check, 100);
-        } catch (e) {
-          if (++tries > max) reject(new Error("BitcoinJS not loaded."));
-          else setTimeout(check, 100);
-        }
-      };
-      check();
-    });
-
     let address = "";
 
     async function connectWallet() {
@@ -143,10 +126,10 @@
       statusEl.innerText = "⏳ Creating inscription...";
 
       try {
-        const bitcoin = await window.bitcoinjsReady;
+        const bitcoin = window.bitcoinjsLib;
         const psbt = new bitcoin.Psbt({ network: bitcoin.networks.bitcoin });
 
-        // 🚧 TO DO: Add real inputs/outputs and OP_RETURN with 'content'
+        // 🔧 TO DO: Add real inputs/outputs and OP_RETURN data here...
 
         statusEl.innerText = "✅ PSBT ready — signing next...";
         const signed = await window.unisat.signPsbt(psbt.toHex());
