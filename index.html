@@ -1,101 +1,186 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-
-<!-- ✅ Load BitcoinJS v5.2.0 UMD and patch window.bitcoin -->
-<script src="https://unpkg.com/bitcoinjs-lib@5.2.0/dist/bitcoinjs-lib.min.js"></script>
-<script>
-  window.bitcoin = window.bitcoin || window['bitcoinjs-lib'];
-  window.bitcoinjsReady = new Promise((resolve, reject) => {
-    let tries = 0;
-    const maxTries = 50;
-    function check() {
-      if (window.bitcoin?.Psbt && window.bitcoin?.networks?.bitcoin) {
-        resolve(window.bitcoin);
-      } else if (++tries > maxTries) {
-        reject(new Error("❌ BitcoinJS (v5.2.0) not loaded. Try refreshing."));
-      } else {
-        setTimeout(check, 100);
-      }
-    }
-    check();
-  });
-</script>
-
   <meta charset="UTF-8" />
-  <title>✅ BitcoinJS v6.0.0 Working Demo</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Block Notes On-Chain</title>
 
-  <!-- ✅ Load BitcoinJS v6 from CDN -->
+  <!-- ✅ BitcoinJS v6.0.0 (CDN) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/bitcoinjs-lib/6.0.0/bitcoinjs.min.js"></script>
 
-  <!-- ✅ Ensure window.bitcoin is ready -->
+  <!-- Wait for BitcoinJS -->
   <script>
     window.bitcoinjsReady = new Promise((resolve, reject) => {
       let tries = 0;
-      const max = 50;
-
-      function check() {
-        if (window.bitcoin && window.bitcoin.Psbt) {
-          console.log("✅ BitcoinJS loaded.");
-          resolve(window.bitcoin);
-        } else if (++tries > max) {
+      const maxTries = 50;
+      const check = () => {
+        if (window.bitcoin && bitcoin.Psbt && bitcoin.networks?.bitcoin) {
+          resolve(bitcoin);
+        } else if (++tries >= maxTries) {
           reject(new Error("❌ BitcoinJS (v6.0.0) not loaded."));
         } else {
           setTimeout(check, 100);
         }
-      }
-
+      };
       check();
     });
   </script>
 
   <style>
     body {
-      background: #000;
-      color: #00ff00;
+      background-color: #000;
+      color: #0f0;
       font-family: monospace;
       text-align: center;
-      padding-top: 3rem;
+      padding: 2rem;
+    }
+    h1 {
+      color: #00ff00;
+      font-size: 2rem;
+    }
+    .card {
+      background: rgba(255, 255, 255, 0.05);
+      padding: 1.5rem;
+      border-radius: 10px;
+      margin: 1rem auto;
+      max-width: 600px;
+    }
+    input, textarea {
+      display: block;
+      margin: 0.5rem auto;
+      padding: 0.5rem;
+      width: 90%;
+      border-radius: 8px;
+      border: none;
+      background: #1a1a1a;
+      color: #0f0;
     }
     button {
-      padding: 1rem 2rem;
       background: #00ffff;
       color: black;
-      font-weight: bold;
+      padding: 10px 20px;
+      border-radius: 8px;
       border: none;
-      border-radius: 5px;
+      margin-top: 1rem;
       cursor: pointer;
     }
     #status {
-      margin-top: 2rem;
       color: #ff5555;
+      margin-top: 1rem;
     }
-    .success {
-      color: #00ff00;
+    .footer {
+      margin-top: 2rem;
+      color: #aaa;
     }
   </style>
 </head>
 <body>
   <h1>BitcoinJS v6.0.0 — LIVE WORKING TEST</h1>
-  <button onclick="testBitcoinJs()">Test BitcoinJS</button>
-  <div id="status">Waiting...</div>
+
+  <div class="card">
+    <h3>🔗 Connect UniSat Wallet</h3>
+    <button onclick="connectWallet()">Connect Wallet</button>
+    <p id="walletAddress"></p>
+  </div>
+
+  <div class="card">
+    <h3>📝 Write & Inscribe Your Note</h3>
+    <input id="blockInput" type="number" placeholder="Block Height (e.g. 840000)" />
+    <textarea id="messageInput" rows="3" placeholder="Your message..."></textarea>
+    <input id="handleInput" type="text" placeholder="Your handle (optional)" />
+    <button onclick="startInscribe()">🧱 Inscribe</button>
+    <p id="status"></p>
+  </div>
+
+  <div class="card">
+    <h3>📜 Recent Block Notes</h3>
+    <ul id="feed">Loading...</ul>
+  </div>
+
+  <div class="footer">
+    Built on Bitcoin — Powered by UniSat + Ordinals
+  </div>
 
   <script>
-    async function testBitcoinJs() {
-      const status = document.getElementById("status");
+    let address = "";
+
+    async function connectWallet() {
+      if (!window.unisat) {
+        alert("Please install UniSat Wallet.");
+        return;
+      }
+      try {
+        const accounts = await window.unisat.requestAccounts();
+        address = accounts[0];
+        document.getElementById("walletAddress").innerText = "✅ Connected: " + address;
+      } catch (e) {
+        document.getElementById("walletAddress").innerText = "❌ Connection failed.";
+      }
+    }
+
+    async function startInscribe() {
+      const block = document.getElementById("blockInput").value.trim();
+      const message = document.getElementById("messageInput").value.trim();
+      const handle = document.getElementById("handleInput").value.trim() || "satoshi";
+
+      if (!address || !block || !message) {
+        document.getElementById("status").innerText = "⚠️ Please fill all fields and connect wallet.";
+        return;
+      }
+
+      const content = `text block-note:${block} "${message}" – @${handle} #blocknotes`;
+      document.getElementById("status").innerText = "⏳ Building inscription...";
+
       try {
         const bitcoin = await window.bitcoinjsReady;
         const psbt = new bitcoin.Psbt({ network: bitcoin.networks.bitcoin });
-        console.log("✅ PSBT created", psbt);
-        status.textContent = "✅ BitcoinJS loaded and PSBT created!";
-        status.className = "success";
+
+        // Simulated output (replace with real UTXO logic)
+        psbt.addInput({
+          hash: "0".repeat(64), index: 0,
+          nonWitnessUtxo: Buffer.alloc(256)
+        });
+        psbt.addOutput({
+          script: bitcoin.payments.embed({
+            data: [
+              Buffer.from("ord"),
+              Buffer.from([1]),
+              Buffer.from("text/plain"),
+              Buffer.from([0]),
+              Buffer.from(content)
+            ]
+          }).output,
+          value: 546
+        });
+
+        document.getElementById("status").innerText = "✅ PSBT built (demo only)";
+        console.log("PSBT (demo):", psbt.toHex());
       } catch (err) {
-        console.error("❌ Error:", err);
-        status.textContent = "❌ " + err.message;
-        status.className = "";
+        document.getElementById("status").innerText = "❌ " + (err?.message || "Unknown error");
+        console.error("Inscribe Error:", err);
       }
     }
+
+    async function loadRecentNotes() {
+      const feed = document.getElementById("feed");
+      try {
+        const res = await fetch("https://api.hiro.so/ordinals/v1/inscriptions?limit=10");
+        const data = await res.json();
+        const notes = data.results.filter(i =>
+          i.content_type === "text/plain" && i.content?.includes("block-note:")
+        );
+        feed.innerHTML = "";
+        for (const note of notes) {
+          const li = document.createElement("li");
+          li.textContent = note.content.slice(0, 100);
+          feed.appendChild(li);
+        }
+      } catch (e) {
+        feed.innerHTML = "<li>Failed to load notes.</li>";
+      }
+    }
+
+    window.addEventListener("DOMContentLoaded", loadRecentNotes);
   </script>
 </body>
 </html>
