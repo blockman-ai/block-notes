@@ -2,111 +2,78 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
   <title>Block Notes — Inscribe on Bitcoin</title>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
   <style>
+    /* Your sleek, modern alien tech UI… */
     body {
-      margin: 0;
-      font-family: 'Inter', sans-serif;
-      background: linear-gradient(145deg, #050505, #0f0f0f);
-      color: #f0f0f0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 2rem;
+      margin: 0; font-family:'Inter',sans-serif;
+      background:linear-gradient(145deg,#050505,#0f0f0f);
+      color:#f0f0f0; display:flex;flex-direction:column;
+      align-items:center;padding:2rem;
     }
-
     h1 {
-      font-family: 'Orbitron', sans-serif;
-      font-size: 2.8rem;
-      background: linear-gradient(90deg, #00ffff, #ff00ff);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      margin-bottom: 0.5rem;
+      font-family:'Orbitron',sans-serif;
+      font-size:2.8rem;
+      background:linear-gradient(90deg,#00ffff,#ff00ff);
+      -webkit-background-clip:text;
+      -webkit-text-fill-color:transparent;
+      margin-bottom:.5rem;
     }
-
     .subtitle {
-      font-family: 'Orbitron', sans-serif;
-      font-size: 1.2rem;
-      color: #888;
-      margin-bottom: 2rem;
+      font-family:'Orbitron',sans-serif;
+      font-size:1.2rem;color:#888;margin-bottom:2rem;
     }
-
     .card {
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid #222;
-      border-radius: 1.25rem;
-      padding: 2rem;
-      margin-bottom: 2rem;
-      width: 100%;
-      max-width: 500px;
-      box-shadow: 0 0 25px rgba(0, 255, 255, 0.2);
-      transition: all 0.3s ease;
+      background:rgba(255,255,255,0.05);
+      border:1px solid #222;
+      border-radius:1.25rem;
+      padding:2rem;margin-bottom:2rem;
+      width:100%;max-width:500px;
+      box-shadow:0 0 25px rgba(0,255,255,0.2);
+      transition:all .3s ease;
     }
-
-    .card:hover {
-      box-shadow: 0 0 30px rgba(255, 0, 255, 0.4);
+    .card:hover {box-shadow:0 0 30px rgba(255,0,255,0.4);}
+    label,input,textarea {
+      display:block;width:100%;
+      margin-top:1rem;background:#141414;
+      border:none;border-radius:.75rem;
+      padding:.75rem 1rem;color:#fff;
+      font-size:1rem;
     }
-
-    label, input, textarea {
-      display: block;
-      width: 100%;
-      margin-top: 1rem;
-      background: #141414;
-      border: none;
-      border-radius: 0.75rem;
-      padding: 0.75rem 1rem;
-      color: #fff;
-      font-size: 1rem;
+    input::placeholder,textarea::placeholder {
+      color:#777;
     }
-
-    input::placeholder, textarea::placeholder {
-      color: #777;
-    }
-
     button {
-      width: 100%;
-      margin-top: 1.5rem;
-      background: linear-gradient(90deg, #00ffcc, #6600ff);
-      color: #000;
-      font-family: 'Orbitron', sans-serif;
-      font-weight: 700;
-      font-size: 1rem;
-      padding: 0.75rem 1rem;
-      border: none;
-      border-radius: 0.75rem;
-      cursor: pointer;
-      transition: all 0.2s ease-in-out;
+      width:100%;margin-top:1.5rem;
+      background:linear-gradient(90deg,#00ffcc,#6600ff);
+      color:#000;font-family:'Orbitron',sans-serif;
+      font-weight:700;font-size:1rem;
+      padding:.75rem 1rem;border:none;
+      border-radius:.75rem;cursor:pointer;
+      transition:all .2s ease-in-out;
     }
-
     button:hover {
-      transform: scale(1.05);
-      box-shadow: 0 0 10px #00ffff;
+      transform:scale(1.05);
+      box-shadow:0 0 10px #00ffff;
     }
-
     #status {
-      margin-top: 1rem;
-      font-size: 0.95rem;
-      color: #ff0080;
+      margin-top:1rem;font-size:.95rem;color:#ff0080;
     }
-
     .footer {
-      margin-top: 3rem;
-      font-size: 0.85rem;
-      color: #555;
+      margin-top:3rem;font-size:.85rem;color:#555;
     }
-
-    @media screen and (max-width: 600px) {
-      h1 { font-size: 2rem; }
-      .subtitle { font-size: 1rem; }
-      .card { padding: 1.5rem; }
+    @media screen and (max-width:600px) {
+      h1 {font-size:2rem;}
+      .subtitle {font-size:1rem;}
+      .card {padding:1.5rem;}
     }
   </style>
 </head>
 <body>
   <h1>Block Notes</h1>
-  <div class="subtitle">Inscribe on Bitcoin with alien-grade tech 🛸</div>
+  <div class="subtitle">Inscribe on Bitcoin with alien‑grade tech 🛸</div>
 
   <div class="card">
     <h2>1. Connect Wallet</h2>
@@ -127,60 +94,70 @@
     ✨ Powered by Bitcoin + UniSat • Designed in Orbit 🪐
   </div>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/bitcoinjs-lib/6.0.0/bitcoinjs.min.js"></script>
+  <!-- Load BitcoinJS locally -->
+  <script src="js/bitcoinjs.min.js"></script>
   <script>
+    // Fallback checker
     window.bitcoinjsReady = new Promise((resolve, reject) => {
-      let tries = 0;
-      const maxTries = 50;
-      function check() {
-        if (window.bitcoin?.Psbt && window.bitcoin?.networks?.bitcoin) {
-          resolve(window.bitcoin);
-        } else if (++tries > maxTries) {
-          reject(new Error("❌ BitcoinJS (v6.0.0) not loaded."));
-        } else {
-          setTimeout(check, 100);
-        }
-      }
+      let tries = 0, max = 50;
+      const check = () => {
+        if (window.bitcoin?.Psbt && bitcoin.networks?.bitcoin) resolve(window.bitcoin);
+        else if (++tries > max) reject(new Error("BitcoinJS not loaded locally."));
+        else setTimeout(check, 100);
+      };
       check();
     });
 
     let address = "";
 
     async function connectWallet() {
-      if (!window.unisat) return alert("Install UniSat Wallet to continue.");
+      if (!window.unisat) return alert("Install UniSat Wallet first.");
       try {
-        const accounts = await window.unisat.requestAccounts();
-        address = accounts[0];
+        const [acct] = await window.unisat.requestAccounts();
+        address = acct;
         document.getElementById("walletStatus").innerText = `✅ Connected: ${address}`;
-      } catch (err) {
+      } catch {
         document.getElementById("walletStatus").innerText = "❌ Connection failed.";
       }
     }
 
     async function startInscribe() {
-      const block = document.getElementById("blockInput").value.trim();
-      const message = document.getElementById("messageInput").value.trim();
-      const handle = document.getElementById("handleInput").value.trim() || "satoshi";
-      const status = document.getElementById("status");
+      const statusEl = document.getElementById("status");
+      const b = document.getElementById("blockInput").value.trim();
+      const m = document.getElementById("messageInput").value.trim();
+      const h = document.getElementById("handleInput").value.trim() || "satoshi";
 
-      if (!address || !block || !message) {
-        status.innerText = "⚠️ Please fill all fields and connect wallet.";
+      if (!address || !b || !m) {
+        statusEl.innerText = "⚠️ Fill all fields & connect wallet.";
         return;
       }
 
-      const content = `text block-note:${block} \"${message}\" – @${handle} #blocknotes`;
-      status.innerText = "⏳ Building inscription...";
+      const content = `text block-note:${b} "${m}" – @${h} #blocknotes`;
+      statusEl.innerText = "⏳ Creating inscription...";
 
       try {
         const bitcoin = await window.bitcoinjsReady;
-        const psbt = new bitcoin.Psbt({ network: bitcoin.networks.bitcoin });
-        // ... Add realistic PSBT logic here later ...
-        status.innerText = "✅ PSBT created (simulated). Ready for signing.";
-      } catch (err) {
-        console.error("Inscribe Error:", err);
-        status.innerText = "❌ " + (err?.message || "Unknown error");
+        // PSBT build logic here:
+        const psbt = new bitcoin.Psbt({network:bitcoin.networks.bitcoin});
+        // In real logic: add inputs, outputs, embed OP_RETURN...
+        statusEl.innerText = "✅ PSBT ready — signing next...";
+        const signed = await window.unisat.signPsbt(psbt.toHex());
+        const txHex = await window.unisat.pushPsbt(signed);
+        const txid = await broadcastRawTx(txHex); // you'll need broadcastRawTx()
+        statusEl.innerHTML = `✅ Inscribed! <a href="https://mempool.space/tx/${txid}" target="_blank">${txid}</a>`;
+      } catch (e) {
+        console.error(e);
+        statusEl.innerText = "❌ " + (e.message || e);
       }
     }
+
+    const broadcastRawTx = async hex => {
+      const res = await fetch("https://mempool.space/api/tx", {
+        method:"POST", headers:{"Content-Type":"text/plain"}, body:hex
+      });
+      if (!res.ok) throw new Error(await res.text());
+      return await res.text();
+    };
   </script>
 </body>
 </html>
