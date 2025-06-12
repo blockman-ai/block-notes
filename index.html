@@ -97,17 +97,27 @@
   </div>
 
   <script>
-    window.bitcoinjsReady = new Promise((resolve, reject) => {
-      let tries = 0, max = 50;
-      const check = () => {
-        if (window.bitcoin?.Psbt && bitcoin.networks?.bitcoin) resolve(window.bitcoin);
+    
+    <script>
+  let bitcoin = null;
+    
+  window.bitcoinjsReady = new Promise((resolve, reject) => {
+    let tries = 0, max = 50;
+    const check = () => {
+      try {
+        bitcoin = window.bitcoinjs || window['bitcoinjs-lib'] || window.bitcoin || undefined;
+        if (bitcoin?.Psbt && bitcoin.networks?.bitcoin) resolve(bitcoin);
         else if (++tries > max) reject(new Error("BitcoinJS not loaded."));
         else setTimeout(check, 100);
-      };
-      check();
-    });
-
-    let address = "";
+      } catch (e) {
+        if (++tries > max) reject(new Error("BitcoinJS not loaded."));
+        else setTimeout(check, 100);
+      }
+    };
+    check();
+  });
+</script>
+  let address = "";
 
     async function connectWallet() {
       if (!window.unisat) return alert("Install UniSat Wallet first.");
