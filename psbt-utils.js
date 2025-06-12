@@ -18,7 +18,8 @@ window.bitcoinjsReady = new Promise((resolve, reject) => {
 
 // Build PSBT with inscription and creator fee
 async function buildPsbt(inscriptionText, userAddress) {
-  const bitcoin = window.bitcoin;
+  const bitcoin = await window.bitcoinjsReady;
+  // originally: const bitcoin = window.bitcoin;
   if (!bitcoin || !bitcoin.Psbt) throw new Error("BitcoinJS not available");
   const network = bitcoin.networks.bitcoin;
   const creatorAddress = "bc1qay9jnunvj087zgxgkuwd7ps5gjmnsnfczfkwlz";
