@@ -5,91 +5,26 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Block Notes On-Chain</title>
 
-  <!-- ✅ Load BitcoinJS as UMD v5.2.0 -->
-<script src="https://cdn.jsdelivr.net/npm/bitcoinjs-lib@5.2.0/dist/bitcoinjs-lib.umd.min.js"></script>
+  <!-- ✅ Load BitcoinJS from Unpkg (v5.2.0 UMD) -->
+  <script src="https://unpkg.com/bitcoinjs-lib@5.2.0/dist/bitcoinjs-lib.min.js"></script>
 
-<!-- ✅ Force assign to window.bitcoin (patch for jsdelivr UMD behavior) -->
-<script>
-  if (!window.bitcoin) {
-    window.bitcoin = window['bitcoinjs-lib'];
-  }
-  window.bitcoinjsReady = new Promise((resolve, reject) => {
-    let tries = 0;
-    const maxTries = 50;
-    function check() {
-      if (window.bitcoin?.Psbt && window.bitcoin?.networks?.bitcoin) {
-        window.bitcoinjs = window.bitcoin;
-        resolve(window.bitcoin);
-      } else if (++tries >= maxTries) {
-        reject(new Error("❌ Error: BitcoinJS (v5.2.0) not loaded. Try refreshing the page."));
-      } else {
-        setTimeout(check, 100);
-      }
-    }
-    check();
-  });
-</script>
-  
-  <!-- Your PSBT logic and broadcast script (inline for simplicity) -->
+  <!-- ✅ Global readiness patch -->
   <script>
-    async function buildPsbt(inscriptionText, userAddress) {
-      const bitcoin = await window.bitcoinjsReady;
-      const network = bitcoin.networks.bitcoin;
-      const creatorAddress = "bc1qay9jnunvj087zgxgkuwd7ps5gjmnsnfczfkwlz";
-      const creatorFeeSats = 546;
-
-      const feeRates = await fetch("https://mempool.space/api/v1/fees/recommended").then(res => res.json());
-      const feeRate = feeRates.hourFee;
-
-      const utxos = await window.unisat.getUnspentOutputs();
-      if (!utxos || utxos.length === 0) throw new Error("No UTXOs found.");
-
-      const utxo = utxos[0];
-      const inputHex = await fetch(`https://mempool.space/api/tx/${utxo.txid}/hex`).then(r => r.text());
-
-      const psbt = new bitcoin.Psbt({ network });
-      psbt.addInput({
-        hash: utxo.txid,
-        index: utxo.vout,
-        nonWitnessUtxo: Buffer.from(inputHex, "hex")
-      });
-
-      const embed = bitcoin.payments.embed({
-        data: [
-          Buffer.from("ord"),
-          Buffer.from([1]),
-          Buffer.from("text/plain"),
-          Buffer.from([0]),
-          Buffer.from(inscriptionText)
-        ]
-      });
-
-      psbt.addOutput({ script: embed.output, value: 546 });
-      psbt.addOutput({ address: creatorAddress, value: creatorFeeSats });
-
-      const totalIn = utxo.value;
-      const estimatedFee = Math.ceil(200 * feeRate);
-      const change = totalIn - 546 - creatorFeeSats - estimatedFee;
-      if (change < 546) throw new Error("Insufficient funds after fees.");
-
-      psbt.addOutput({ address: userAddress, value: change });
-      return psbt.toHex();
-    }
-
-    async function broadcastRawTx(rawTxHex) {
-      const res = await fetch("https://mempool.space/api/tx", {
-        method: "POST",
-        headers: { "Content-Type": "text/plain" },
-        body: rawTxHex
-      });
-
-      if (!res.ok) {
-        const errorText = await res.text();
-        throw new Error("Broadcast failed: " + errorText);
-      }
-
-      return await res.text();
-    }
+    window.bitcoinjsReady = new Promise((resolve, reject) => {
+      let tries = 0;
+      const maxTries = 50;
+      const check = () => {
+        if (window.bitcoin && window.bitcoin.Psbt && window.bitcoin.networks?.bitcoin) {
+          window.bitcoinjs = window.bitcoin;
+          resolve(window.bitcoin);
+        } else if (++tries >= maxTries) {
+          reject(new Error("❌ Error: BitcoinJS (v5.2.0) not loaded. Try refreshing the page."));
+        } else {
+          setTimeout(check, 100);
+        }
+      };
+      check();
+    });
   </script>
 
   <style>
@@ -141,7 +76,7 @@
   <h1>Block Notes</h1>
 
   <div class="card">
-    <h3>Step 1: Connect UniSat Wallet</h3>
+    <h3>Step 1: Connect Wallet</h3>
     <button onclick="connectWallet()">🔗 Connect Wallet</button>
     <p id="walletAddress"></p>
   </div>
@@ -155,7 +90,7 @@
     <p id="status"></p>
   </div>
 
-  <div class="footer">Built with ❤️ on Bitcoin | Powered by UniSat & Ordinals</div>
+  <div class="footer">Built with ❤️ on Bitcoin | Powered by UniSat</div>
 
   <script>
     let address = "";
@@ -188,6 +123,7 @@
       document.getElementById("status").innerText = "⏳ Building inscription...";
 
       try {
+        const bitcoin = await window.bitcoinjsReady;
         const psbtHex = await buildPsbt(content, address);
         const signedPsbt = await window.unisat.signPsbt(psbtHex);
         const rawTx = await window.unisat.pushPsbt(signedPsbt);
@@ -195,8 +131,62 @@
         document.getElementById("status").innerHTML = `✅ TX: <a href="https://mempool.space/tx/${txid}" target="_blank">${txid}</a>`;
       } catch (err) {
         console.error("Inscribe Error:", err);
-        document.getElementById("status").innerText = "❌ Error: " + (err?.message || err.toString() || "Unknown error");
+        document.getElementById("status").innerText = "❌ Error: " + (err?.message || err.toString());
       }
+    }
+
+    async function buildPsbt(inscriptionText, userAddress) {
+      const bitcoin = await window.bitcoinjsReady;
+      const network = bitcoin.networks.bitcoin;
+      const creatorAddress = "bc1qay9jnunvj087zgxgkuwd7ps5gjmnsnfczfkwlz";
+      const creatorFeeSats = 546;
+
+      const feeRates = await fetch("https://mempool.space/api/v1/fees/recommended").then(r => r.json());
+      const feeRate = feeRates.hourFee;
+
+      const utxos = await window.unisat.getUnspentOutputs();
+      if (!utxos || utxos.length === 0) throw new Error("No UTXOs found.");
+      const utxo = utxos[0];
+      const inputHex = await fetch(`https://mempool.space/api/tx/${utxo.txid}/hex`).then(r => r.text());
+
+      const psbt = new bitcoin.Psbt({ network });
+      psbt.addInput({
+        hash: utxo.txid,
+        index: utxo.vout,
+        nonWitnessUtxo: Buffer.from(inputHex, "hex")
+      });
+
+      const embed = bitcoin.payments.embed({
+        data: [
+          Buffer.from("ord"),
+          Buffer.from([1]),
+          Buffer.from("text/plain"),
+          Buffer.from([0]),
+          Buffer.from(inscriptionText)
+        ]
+      });
+
+      psbt.addOutput({ script: embed.output, value: 546 });
+      psbt.addOutput({ address: creatorAddress, value: creatorFeeSats });
+
+      const totalIn = utxo.value;
+      const estimatedFee = Math.ceil(200 * feeRate);
+      const change = totalIn - 546 - creatorFeeSats - estimatedFee;
+      if (change < 546) throw new Error("Insufficient funds after fees");
+
+      psbt.addOutput({ address: userAddress, value: change });
+      return psbt.toHex();
+    }
+
+    async function broadcastRawTx(rawTxHex) {
+      const res = await fetch("https://mempool.space/api/tx", {
+        method: "POST",
+        headers: { "Content-Type": "text/plain" },
+        body: rawTxHex
+      });
+
+      if (!res.ok) throw new Error("Broadcast failed: " + await res.text());
+      return await res.text();
     }
   </script>
 </body>
