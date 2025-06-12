@@ -2,99 +2,136 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Block Notes — Inscribe on Bitcoin</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-  <!-- ✅ BitcoinJS v6.0.0 -->
+  <title>Block Notes — Inscribe on Bitcoin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/bitcoinjs-lib/6.0.0/bitcoinjs.min.js"></script>
 
-  <!-- 🔄 Wait for BitcoinJS -->
-  <script>
-    window.bitcoinjsReady = new Promise((resolve, reject) => {
-      let tries = 0;
-      const maxTries = 50;
-      function check() {
-        if (window.bitcoin && bitcoin?.Psbt && bitcoin?.networks?.bitcoin) {
-          console.log("✅ BitcoinJS v6.0.0 loaded");
-          resolve(window.bitcoin);
-        } else if (++tries > maxTries) {
-          reject(new Error("❌ BitcoinJS (v6.0.0) not loaded."));
-        } else {
-          setTimeout(check, 100);
-        }
-      }
-      check();
-    });
-  </script>
-
-  <!-- 💅 Styling -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet" />
   <style>
     body {
+      background: #000;
+      color: #f2f2f2;
+      font-family: 'Inter', sans-serif;
       margin: 0;
       padding: 2rem;
-      background-color: #000;
-      color: #f5f5f5;
-      font-family: 'Inter', sans-serif;
       display: flex;
       flex-direction: column;
       align-items: center;
     }
     h1 {
-      color: #00ff99;
       font-size: 2rem;
-      margin-bottom: 1rem;
+      color: #00ff99;
     }
     .card {
       background: #111;
-      border-radius: 12px;
+      border: 1px solid #333;
+      border-radius: 16px;
       padding: 1.5rem;
       margin: 1rem;
       width: 100%;
       max-width: 600px;
-      box-shadow: 0 0 12px #00ffcc55;
-    }
-    input, textarea {
-      width: 100%;
-      padding: 10px;
-      margin: 8px 0;
-      background: #1c1c1c;
-      border: none;
-      border-radius: 8px;
-      color: white;
+      box-shadow: 0 0 8px rgba(0,255,200,0.1);
     }
     button {
       background: #00ffff;
-      color: #000;
-      padding: 10px 20px;
       border: none;
-      font-weight: bold;
+      color: #000;
+      padding: 10px 16px;
       border-radius: 8px;
+      font-weight: bold;
       cursor: pointer;
-      transition: 0.2s;
+      transition: background 0.3s;
     }
     button:hover {
       background: #00dddd;
     }
-    .status {
-      margin-top: 1rem;
-      color: #ff6666;
+    input, textarea {
+      width: 100%;
+      margin: 0.5rem 0;
+      padding: 10px;
+      border-radius: 8px;
+      background: #1a1a1a;
+      color: #fff;
+      border: none;
+    }
+    #status {
+      margin-top: 0.5rem;
+      font-weight: bold;
+    }
+    .error {
+      color: #ff3333;
     }
     .success {
-      color: #00ff00;
+      color: #00ff99;
     }
-    .inscription {
-      font-family: monospace;
-      background: #222;
-      color: #ffcc00;
-      padding: 0.5rem;
-      border-radius: 6px;
-      margin-top: 0.5rem;
+    .footer {
+      margin-top: 2rem;
+      color: #888;
     }
   </style>
+
+  <script>
+    // BitcoinJS loader check
+    window.bitcoinjsReady = new Promise((resolve, reject) => {
+      let tries = 0;
+      const check = () => {
+        if (window.bitcoin && window.bitcoin.Psbt && window.bitcoin.networks) {
+          resolve(window.bitcoin);
+        } else if (++tries > 50) {
+          reject(new Error("❌ BitcoinJS (v6.0.0) not loaded."));
+        } else {
+          setTimeout(check, 100);
+        }
+      };
+      check();
+    });
+
+    async function connectWallet() {
+      if (!window.unisat) {
+        alert("Please install UniSat Wallet.");
+        return;
+      }
+      try {
+        const accounts = await window.unisat.requestAccounts();
+        const addr = accounts[0];
+        document.getElementById("walletAddress").innerText = `✅ Connected: ${addr}`;
+        window.connectedAddress = addr;
+      } catch (err) {
+        document.getElementById("walletAddress").innerText = `❌ Connection failed.`;
+      }
+    }
+
+    async function startInscribe() {
+      const block = document.getElementById("blockInput").value.trim();
+      const message = document.getElementById("messageInput").value.trim();
+      const handle = document.getElementById("handleInput").value.trim() || "satoshi";
+      const status = document.getElementById("status");
+
+      if (!window.connectedAddress || !block || !message) {
+        status.innerText = "⚠️ Fill all fields and connect wallet.";
+        status.className = "error";
+        return;
+      }
+
+      try {
+        const bitcoin = await window.bitcoinjsReady;
+        status.innerText = "⌛ Building PSBT...";
+        status.className = "";
+
+        // PLACEHOLDER: insert real buildPsbt logic here
+        const psbt = new bitcoin.Psbt({ network: bitcoin.networks.bitcoin });
+        console.log("PSBT placeholder:", psbt);
+        status.innerText = "✅ Built (mocked) ";
+        status.className = "success";
+      } catch (err) {
+        console.error(err);
+        status.innerText = `❌ ${err.message}`;
+        status.className = "error";
+      }
+    }
+  </script>
 </head>
 <body>
-
   <h1>Block Notes — Inscribe on Bitcoin</h1>
 
   <div class="card">
@@ -109,82 +146,14 @@
     <textarea id="messageInput" rows="3" placeholder="Your message..."></textarea>
     <input id="handleInput" type="text" placeholder="Your handle (optional)" />
     <button onclick="startInscribe()">📝 Inscribe</button>
-    <p class="status" id="status"></p>
+    <p id="status"></p>
   </div>
 
   <div class="card">
-    <h3>📜 Recent Block Notes</h3>
-    <ul id="feed">Loading...</ul>
+    <h3>📄 Recent Block Notes</h3>
+    <p><em>No matching notes found.</em></p>
   </div>
 
-  <script>
-    let address = "";
-
-    async function connectWallet() {
-      if (!window.unisat) {
-        alert("Please install UniSat Wallet.");
-        return;
-      }
-      try {
-        const accounts = await window.unisat.requestAccounts();
-        address = accounts[0];
-        document.getElementById("walletAddress").innerText = "✅ Connected: " + address;
-      } catch (err) {
-        document.getElementById("walletAddress").innerText = "❌ Connection failed.";
-      }
-    }
-
-    async function startInscribe() {
-      const block = document.getElementById("blockInput").value.trim();
-      const message = document.getElementById("messageInput").value.trim();
-      const handle = document.getElementById("handleInput").value.trim() || "satoshi";
-      const status = document.getElementById("status");
-
-      if (!address || !block || !message) {
-        status.textContent = "⚠️ Please fill all fields and connect your wallet.";
-        return;
-      }
-
-      status.textContent = "⏳ Building mock PSBT...";
-
-      try {
-        const bitcoin = await window.bitcoinjsReady;
-        const psbt = new bitcoin.Psbt({ network: bitcoin.networks.bitcoin });
-        psbt.addOutput({ address: address, value: 546 }); // mock output
-        status.innerHTML = `<span class="success">✅ Built mock PSBT! (not broadcasted)</span>`;
-      } catch (err) {
-        console.error("Inscribe Error:", err);
-        status.textContent = "❌ " + (err?.message || "Unknown error.");
-      }
-    }
-
-    async function loadRecentNotes() {
-      const feed = document.getElementById("feed");
-      try {
-        const res = await fetch("https://api.hiro.so/ordinals/v1/inscriptions?limit=10&order=desc");
-        const data = await res.json();
-        feed.innerHTML = "";
-
-        for (let note of data.results) {
-          if (note.content_type === "text/plain" && note.content.includes("block-note:")) {
-            const li = document.createElement("li");
-            li.innerHTML = `<div class="inscription">${note.content.slice(0, 120)}...</div>
-              <small><a href="https://ordinals.com/inscription/${note.id}" target="_blank">View</a> • Block ${note.block_height}</small>`;
-            feed.appendChild(li);
-          }
-        }
-
-        if (!feed.innerHTML) {
-          feed.innerHTML = "<li>No matching notes found.</li>";
-        }
-      } catch (e) {
-        feed.innerHTML = "❌ Failed to load notes.";
-        console.error(e);
-      }
-    }
-
-    window.addEventListener("DOMContentLoaded", loadRecentNotes);
-  </script>
-
+  <div class="footer">Built with ❤️ on Bitcoin — Powered by UniSat</div>
 </body>
 </html>
