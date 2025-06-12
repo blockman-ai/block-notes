@@ -1,38 +1,29 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <title>BitcoinJS v5.2.0 - Working Test</title>
+  <title>BitcoinJS Global Test</title>
 </head>
-<body style="background:#111; color:#0f0; font-family:monospace; padding:2rem">
-  <h2 style="color:#0f0">BitcoinJS v5.2.0 - WORKING TEST</h2>
-  <button onclick="testBitcoinJS()">🧪 Test BitcoinJS</button>
-  <pre id="output">Waiting...</pre>
+<body style="background:#111;color:#0f0;font-family:monospace;padding:2rem">
+  <h2>BitcoinJS v5.2.0 - Test (ESM Loaded)</h2>
+  <button onclick="test()">Test BitcoinJS</button>
+  <pre id="log">Waiting...</pre>
 
-  <!-- ✅ This one loads the UMD version correctly -->
-  <script src="https://cdn.jsdelivr.net/npm/bitcoinjs-lib@5.2.0/dist/bitcoinjs-lib.umd.min.js"></script>
+  <script type="module">
+    import * as bitcoin from "https://cdn.jsdelivr.net/npm/bitcoinjs-lib@5.2.0/+esm";
+    window.bitcoin = bitcoin;
+    window.bitcoinjsReady = Promise.resolve(bitcoin);
+  </script>
 
-  <!-- ✅ Manual patch for global window.bitcoin -->
   <script>
-    if (!window.bitcoin) {
-      window.bitcoin = window['bitcoinjs-lib'];
-    }
-
-    async function testBitcoinJS() {
-      const out = document.getElementById("output");
-      out.textContent = "⏳ Checking bitcoinjs-lib...";
-
+    async function test() {
+      const log = document.getElementById("log");
       try {
-        if (!window.bitcoin) throw new Error("window.bitcoin is undefined");
-        if (!bitcoin.Psbt) throw new Error("bitcoin.Psbt is missing");
-        if (!bitcoin.networks?.bitcoin) throw new Error("bitcoin.networks.bitcoin is missing");
-
-        const psbt = new bitcoin.Psbt({ network: bitcoin.networks.bitcoin });
-        out.textContent = "✅ BitcoinJS v5.2.0 Loaded.\n\n" + psbt.toString();
-      } catch (err) {
-        out.style.color = "#f33";
-        out.textContent = "❌ Error: " + err.message;
-        console.error(err);
+        const btc = await window.bitcoinjsReady;
+        const psbt = new btc.Psbt({ network: btc.networks.bitcoin });
+        log.textContent = "✅ Success: PSBT created\n\n" + psbt.toString();
+      } catch (e) {
+        log.style.color = "red";
+        log.textContent = "❌ Error: " + e.message;
       }
     }
   </script>
