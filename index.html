@@ -2,42 +2,52 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>BitcoinJS v5.2.0 – ESM Test</title>
+  <title>BitcoinJS Test</title>
+
+  <!-- ✅ Load working BitcoinJS UMD -->
+  <script src="https://cdn.jsdelivr.net/npm/bitcoinjs-lib@5.2.0/dist/bitcoinjs-lib.umd.min.js"></script>
+  <script>
+    window.bitcoin = window['bitcoinjs-lib'];
+  </script>
+
   <style>
     body {
-      background: #0a0a0a; color: #fff; font-family: monospace;
-      text-align: center; padding: 2rem;
+      background: black;
+      color: lime;
+      font-family: monospace;
+      text-align: center;
+      padding: 2rem;
     }
-    h1 { color: #0ff; }
     button {
-      padding: 10px 20px; background: #00ffff; color: black;
-      border: none; border-radius: 6px; font-weight: bold;
+      padding: 10px 20px;
+      font-weight: bold;
+      background: #00ffff;
+      color: black;
+      border: none;
+      border-radius: 6px;
     }
-    #status { margin-top: 1rem; font-size: 1.2rem; }
-    .success { color: #0f0; }
-    .error { color: #f44; }
+    #status {
+      margin-top: 1rem;
+      color: red;
+    }
   </style>
 </head>
 <body>
-  <h1>BitcoinJS v5.2.0 – ESM Import Test</h1>
-  <button onclick="testBitcoinJS()">Test BitcoinJS</button>
+  <h1>BitcoinJS v5.2.0 - LIVE WORKING TEST</h1>
+  <button onclick="testBitcoin()">Test BitcoinJS</button>
   <p id="status"></p>
 
-  <script type="module">
-    // Load BitcoinJS ESM build
-    const { Psbt, networks } = await import('https://unpkg.com/bitcoinjs-lib@5.2.0/dist/bitcoinjs.lib.esm.js');
-
-    window.testBitcoinJS = () => {
-      const status = document.getElementById('status');
+  <script>
+    function testBitcoin() {
       try {
-        const psbt = new Psbt({ network: networks.bitcoin });
-        console.log('✅ PSBT:', psbt);
-        status.innerHTML = "<span class='success'>✅ PSBT initialized successfully!</span>";
+        const psbt = new bitcoin.Psbt({ network: bitcoin.networks.bitcoin });
+        document.getElementById("status").innerHTML = "✅ PSBT initialized!";
+        console.log("PSBT ready:", psbt);
       } catch (err) {
         console.error(err);
-        status.innerHTML = `<span class='error'>❌ Error: ${err.message}</span>`;
+        document.getElementById("status").innerHTML = "❌ Error: " + err.message;
       }
-    };
+    }
   </script>
 </body>
 </html>
