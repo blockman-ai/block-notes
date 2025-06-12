@@ -3,88 +3,125 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Block Notes — Inscribe on Bitcoin</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+  <title>Block Notes — On-Chain</title>
+
+  <!-- ✅ BitcoinJS v6.0.0 -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/bitcoinjs-lib/6.0.0/bitcoinjs.min.js"></script>
-
-  <style>
-    body {
-      background: #000;
-      color: #f2f2f2;
-      font-family: 'Inter', sans-serif;
-      margin: 0;
-      padding: 2rem;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-    h1 {
-      font-size: 2rem;
-      color: #00ff99;
-    }
-    .card {
-      background: #111;
-      border: 1px solid #333;
-      border-radius: 16px;
-      padding: 1.5rem;
-      margin: 1rem;
-      width: 100%;
-      max-width: 600px;
-      box-shadow: 0 0 8px rgba(0,255,200,0.1);
-    }
-    button {
-      background: #00ffff;
-      border: none;
-      color: #000;
-      padding: 10px 16px;
-      border-radius: 8px;
-      font-weight: bold;
-      cursor: pointer;
-      transition: background 0.3s;
-    }
-    button:hover {
-      background: #00dddd;
-    }
-    input, textarea {
-      width: 100%;
-      margin: 0.5rem 0;
-      padding: 10px;
-      border-radius: 8px;
-      background: #1a1a1a;
-      color: #fff;
-      border: none;
-    }
-    #status {
-      margin-top: 0.5rem;
-      font-weight: bold;
-    }
-    .error {
-      color: #ff3333;
-    }
-    .success {
-      color: #00ff99;
-    }
-    .footer {
-      margin-top: 2rem;
-      color: #888;
-    }
-  </style>
-
   <script>
-    // BitcoinJS loader check
     window.bitcoinjsReady = new Promise((resolve, reject) => {
-      let tries = 0;
-      const check = () => {
-        if (window.bitcoin && window.bitcoin.Psbt && window.bitcoin.networks) {
+      let attempts = 0;
+      const maxTries = 50;
+      function check() {
+        if (window.bitcoin?.Psbt && window.bitcoin?.networks?.bitcoin) {
           resolve(window.bitcoin);
-        } else if (++tries > 50) {
+        } else if (++attempts > maxTries) {
           reject(new Error("❌ BitcoinJS (v6.0.0) not loaded."));
         } else {
           setTimeout(check, 100);
         }
-      };
+      }
       check();
     });
+  </script>
+
+  <!-- Google Font (pixelated style) -->
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Press Start 2P', monospace;
+      background-color: #0a0a0a;
+      color: #00ffcc;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      min-height: 100vh;
+      padding: 2rem;
+    }
+    h1 {
+      font-size: 1.5rem;
+      margin-bottom: 1.5rem;
+      text-align: center;
+      color: #00ffcc;
+      text-shadow: 0 0 6px #00ffcc;
+    }
+    .card {
+      background: rgba(255, 255, 255, 0.05);
+      border: 2px solid #00ffcc;
+      border-radius: 8px;
+      padding: 2rem;
+      margin: 1rem 0;
+      width: 100%;
+      max-width: 600px;
+    }
+    label, p, small {
+      font-size: 10px;
+      color: #cccccc;
+    }
+    input, textarea {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      border: none;
+      border-radius: 4px;
+      background: #1a1a1a;
+      color: #00ffcc;
+      font-family: inherit;
+      font-size: 10px;
+    }
+    button {
+      background: #00ffcc;
+      color: #0a0a0a;
+      padding: 10px 16px;
+      border: none;
+      border-radius: 4px;
+      font-family: inherit;
+      font-size: 10px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+    #status {
+      margin-top: 10px;
+      color: red;
+      font-size: 10px;
+    }
+    .success {
+      color: lime;
+    }
+    .footer {
+      margin-top: 3rem;
+      font-size: 8px;
+      color: #888;
+    }
+  </style>
+</head>
+<body>
+  <h1>🧱 Block Notes — Inscribe on Bitcoin</h1>
+
+  <div class="card">
+    <p>1. Connect Wallet</p>
+    <button onclick="connectWallet()">🔗 Connect UniSat</button>
+    <p id="walletAddress"></p>
+  </div>
+
+  <div class="card">
+    <p>2. Write Your Note</p>
+    <input id="blockInput" type="number" placeholder="Block Height (e.g. 840000)" />
+    <textarea id="messageInput" rows="3" placeholder="Your message..."></textarea>
+    <input id="handleInput" type="text" placeholder="Your handle (optional)" />
+    <button onclick="startInscribe()">📝 Inscribe</button>
+    <p id="status"></p>
+  </div>
+
+  <div class="footer">
+    Built with 🟩 pixel precision • Powered by Bitcoin + UniSat
+  </div>
+
+  <script>
+    let address = "";
 
     async function connectWallet() {
       if (!window.unisat) {
@@ -93,11 +130,10 @@
       }
       try {
         const accounts = await window.unisat.requestAccounts();
-        const addr = accounts[0];
-        document.getElementById("walletAddress").innerText = `✅ Connected: ${addr}`;
-        window.connectedAddress = addr;
-      } catch (err) {
-        document.getElementById("walletAddress").innerText = `❌ Connection failed.`;
+        address = accounts[0];
+        document.getElementById("walletAddress").innerText = "✅ Connected: " + address;
+      } catch (e) {
+        document.getElementById("walletAddress").innerText = "❌ Connection failed.";
       }
     }
 
@@ -105,55 +141,25 @@
       const block = document.getElementById("blockInput").value.trim();
       const message = document.getElementById("messageInput").value.trim();
       const handle = document.getElementById("handleInput").value.trim() || "satoshi";
-      const status = document.getElementById("status");
 
-      if (!window.connectedAddress || !block || !message) {
-        status.innerText = "⚠️ Fill all fields and connect wallet.";
-        status.className = "error";
+      if (!address || !block || !message) {
+        document.getElementById("status").innerText = "⚠️ Please fill all fields and connect wallet.";
         return;
       }
 
+      const content = `text block-note:${block} \"${message}\" – @${handle} #blocknotes`;
+      document.getElementById("status").innerText = "⏳ Building inscription...";
+
       try {
         const bitcoin = await window.bitcoinjsReady;
-        status.innerText = "⌛ Building PSBT...";
-        status.className = "";
-
-        // PLACEHOLDER: insert real buildPsbt logic here
         const psbt = new bitcoin.Psbt({ network: bitcoin.networks.bitcoin });
-        console.log("PSBT placeholder:", psbt);
-        status.innerText = "✅ Built (mocked) ";
-        status.className = "success";
+        console.log("✅ Ready to inscribe:", content);
+        document.getElementById("status").innerText = "✅ BitcoinJS ready — plug in your PSBT logic here.";
       } catch (err) {
-        console.error(err);
-        status.innerText = `❌ ${err.message}`;
-        status.className = "error";
+        console.error("Inscribe Error:", err);
+        document.getElementById("status").innerText = "❌ Error: " + (err?.message || err.toString() || "Unknown error");
       }
     }
   </script>
-</head>
-<body>
-  <h1>Block Notes — Inscribe on Bitcoin</h1>
-
-  <div class="card">
-    <h3>1. Connect Wallet</h3>
-    <button onclick="connectWallet()">🔗 Connect UniSat</button>
-    <p id="walletAddress"></p>
-  </div>
-
-  <div class="card">
-    <h3>2. Write Your Note</h3>
-    <input id="blockInput" type="number" placeholder="Block Height (e.g. 840000)" />
-    <textarea id="messageInput" rows="3" placeholder="Your message..."></textarea>
-    <input id="handleInput" type="text" placeholder="Your handle (optional)" />
-    <button onclick="startInscribe()">📝 Inscribe</button>
-    <p id="status"></p>
-  </div>
-
-  <div class="card">
-    <h3>📄 Recent Block Notes</h3>
-    <p><em>No matching notes found.</em></p>
-  </div>
-
-  <div class="footer">Built with ❤️ on Bitcoin — Powered by UniSat</div>
 </body>
 </html>
