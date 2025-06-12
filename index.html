@@ -5,27 +5,25 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Block Notes On-Chain</title>
 
-  <!-- ✅ Load BitcoinJS v6.0.0 from CDN -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/bitcoinjs-lib/6.0.0/bitcoinjs.min.js"></script>
-
-  <!-- ✅ Wait until BitcoinJS is fully loaded -->
-  <script>
-    window.bitcoinjsReady = new Promise((resolve, reject) => {
-      let tries = 0;
-      const maxTries = 50;
-      function check() {
-        if (window.bitcoin && bitcoin.Psbt && bitcoin.networks?.bitcoin) {
-          window.bitcoinjs = bitcoin;
-          resolve(bitcoin);
-        } else if (++tries > maxTries) {
-          reject(new Error("BitcoinJS lib not loaded. Try refreshing the page."));
-        } else {
-          setTimeout(check, 100);
-        }
+ <!-- Option 1: Load BitcoinJS from CDNJS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bitcoinjs-lib/6.0.0/bitcoinjs.min.js"></script>
+<script>
+  window.bitcoinjsReady = new Promise((resolve, reject) => {
+    let attempts = 0;
+    const maxAttempts = 50;
+    const check = () => {
+      if (window.bitcoin && bitcoin.Psbt && bitcoin.networks?.bitcoin) {
+        window.bitcoinjs = bitcoin;
+        resolve(bitcoin);
+      } else if (++attempts >= maxAttempts) {
+        reject(new Error("BitcoinJS lib not loaded from CDNJS."));
+      } else {
+        setTimeout(check, 100);
       }
-      check();
-    });
-  </script>
+    };
+    check();
+  });
+</script>
 
   <!-- Fonts & Styling -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
