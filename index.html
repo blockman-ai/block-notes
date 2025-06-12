@@ -2,35 +2,35 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Block Notes On-Chain</title>
 
-  <!-- ✅ Option A: BitcoinJS v6 from CDNJS -->
+  <!-- BitcoinJS v6.0.0 via CDNJS -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/bitcoinjs-lib/6.0.0/bitcoinjs.min.js"></script>
-
-  <!-- ✅ BitcoinJS Ready Loader -->
   <script>
     window.bitcoinjsReady = new Promise((resolve, reject) => {
       let tries = 0;
       const maxTries = 50;
-      const check = () => {
+      function check() {
         if (window.bitcoin && bitcoin.Psbt && bitcoin.networks?.bitcoin) {
           window.bitcoinjs = bitcoin;
           resolve(bitcoin);
-        } else if (++tries >= maxTries) {
-          reject(new Error("BitcoinJS (CDNJS) not loaded. Try refreshing the page."));
+        } else if (++tries > maxTries) {
+          reject(new Error("BitcoinJS lib (v6.0.0) not loaded. Try refreshing the page."));
         } else {
           setTimeout(check, 100);
         }
-      };
+      }
       check();
     });
   </script>
 
-  <!-- Your App Logic -->
+  <!-- Optional: fallback BitcoinJS v5.2.0 -->
+  <!-- <script src="https://unpkg.com/bitcoinjs-lib@5.2.0/dist/bitcoinjs-lib.min.js"></script> -->
+
+  <!-- Core Logic -->
   <script src="psbt-utils.js" defer></script>
   <script src="broadcast.js" defer></script>
-
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
   <style>
     body {
@@ -42,7 +42,10 @@
       flex-direction: column;
       align-items: center;
     }
-    h1 { color: #00ffff; font-size: 2.5rem; }
+    h1 {
+      color: #00ffff;
+      font-size: 2.5rem;
+    }
     .card {
       background: rgba(255, 255, 255, 0.05);
       border-radius: 16px;
@@ -76,7 +79,9 @@
       padding: 0.5rem;
       border-radius: 6px;
     }
-    #status { margin-top: 1rem; }
+    #status {
+      margin-top: 1rem;
+    }
     ul { padding-left: 0; list-style: none; }
     .footer {
       margin-top: 3rem;
