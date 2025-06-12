@@ -3,19 +3,25 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Block Notes On-Chain</title>
+  <title>BitcoinJS v5.2.0 Full Working Test</title>
 
-  <!-- ✅ BitcoinJS v5.2.0 (UMD) -->
+  <!-- ✅ Load BitcoinJS UMD v5.2.0 -->
   <script src="https://unpkg.com/bitcoinjs-lib@5.2.0/dist/bitcoinjs-lib.min.js"></script>
   <script>
-    window.bitcoin = window.bitcoin || window['bitcoinjs-lib'];
+    // ✅ Patch global window.bitcoin reference if needed
+    if (!window.bitcoin && window['bitcoinjs-lib']) {
+      window.bitcoin = window['bitcoinjs-lib'];
+    }
+
+    // ✅ Wait until BitcoinJS is ready
     window.bitcoinjsReady = new Promise((resolve, reject) => {
       let tries = 0;
       const maxTries = 50;
       function check() {
         if (window.bitcoin?.Psbt && window.bitcoin?.networks?.bitcoin) {
+          console.log("✅ BitcoinJS loaded successfully");
           resolve(window.bitcoin);
-        } else if (++tries > maxTries) {
+        } else if (++tries >= maxTries) {
           reject(new Error("❌ BitcoinJS (v5.2.0) not loaded. Try refreshing."));
         } else {
           setTimeout(check, 100);
@@ -56,8 +62,8 @@
   </style>
 </head>
 <body>
-  <h1>BitcoinJS v5.2.0 - WORKING TEST</h1>
-  <button onclick="testBitcoinJs()">Test BitcoinJS</button>
+  <h1>BitcoinJS v5.2.0 – ✅ Full Test Page</h1>
+  <button onclick="testBitcoinJs()">Test BitcoinJS PSBT</button>
   <p id="status"></p>
 
   <script>
@@ -66,11 +72,11 @@
       try {
         const bitcoin = await window.bitcoinjsReady;
         const psbt = new bitcoin.Psbt({ network: bitcoin.networks.bitcoin });
-        console.log("✅ PSBT ready", psbt);
+        console.log("✅ PSBT object:", psbt);
         status.innerHTML = "<span class='success'>✅ PSBT initialized successfully!</span>";
       } catch (err) {
         status.innerHTML = `❌ Error: <strong>${err.message}</strong>`;
-        console.error(err);
+        console.error("BitcoinJS Error:", err);
       }
     }
   </script>
