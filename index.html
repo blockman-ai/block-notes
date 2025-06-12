@@ -5,28 +5,31 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Block Notes On-Chain</title>
 
-  <!-- ✅ Load working UMD BitcoinJS (v5.2.0) -->
-  <script src="https://cdn.jsdelivr.net/npm/bitcoinjs-lib@5.2.0/dist/bitcoinjs-lib.umd.min.js"></script>
+  <!-- ✅ Load BitcoinJS as UMD v5.2.0 -->
+<script src="https://cdn.jsdelivr.net/npm/bitcoinjs-lib@5.2.0/dist/bitcoinjs-lib.umd.min.js"></script>
 
-  <!-- ✅ Wait for BitcoinJS to load -->
-  <script>
-    window.bitcoinjsReady = new Promise((resolve, reject) => {
-      let tries = 0;
-      const maxTries = 50;
-      function check() {
-        if (window.bitcoin && bitcoin.Psbt && bitcoin.networks?.bitcoin) {
-          window.bitcoinjs = bitcoin;
-          resolve(bitcoin);
-        } else if (++tries >= maxTries) {
-          reject(new Error("❌ Error: BitcoinJS (v5.2.0) not loaded. Try refreshing the page."));
-        } else {
-          setTimeout(check, 100);
-        }
+<!-- ✅ Force assign to window.bitcoin (patch for jsdelivr UMD behavior) -->
+<script>
+  if (!window.bitcoin) {
+    window.bitcoin = window['bitcoinjs-lib'];
+  }
+  window.bitcoinjsReady = new Promise((resolve, reject) => {
+    let tries = 0;
+    const maxTries = 50;
+    function check() {
+      if (window.bitcoin?.Psbt && window.bitcoin?.networks?.bitcoin) {
+        window.bitcoinjs = window.bitcoin;
+        resolve(window.bitcoin);
+      } else if (++tries >= maxTries) {
+        reject(new Error("❌ Error: BitcoinJS (v5.2.0) not loaded. Try refreshing the page."));
+      } else {
+        setTimeout(check, 100);
       }
-      check();
-    });
-  </script>
-
+    }
+    check();
+  });
+</script>
+  
   <!-- Your PSBT logic and broadcast script (inline for simplicity) -->
   <script>
     async function buildPsbt(inscriptionText, userAddress) {
