@@ -2,31 +2,30 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>BitcoinJS v5.2.0 Test</title>
+  <title>BitcoinJS v5.2.0 - Working Test</title>
 </head>
 <body style="background:#111; color:#0f0; font-family:monospace; padding:2rem">
-  <h2>BitcoinJS v5.2.0 Test Page</h2>
+  <h2 style="color:#0f0">BitcoinJS v5.2.0 - WORKING TEST</h2>
   <button onclick="testBitcoinJS()">🧪 Test BitcoinJS</button>
   <pre id="output">Waiting...</pre>
 
-  <!-- Load BitcoinJS v5.2.0 from unpkg -->
-  <script src="https://unpkg.com/bitcoinjs-lib@5.2.0/dist/bitcoinjs-lib.min.js"></script>
+  <!-- ✅ This one loads the UMD version correctly -->
+  <script src="https://cdn.jsdelivr.net/npm/bitcoinjs-lib@5.2.0/dist/bitcoinjs-lib.umd.min.js"></script>
 
+  <!-- ✅ Manual patch for global window.bitcoin -->
   <script>
+    if (!window.bitcoin) {
+      window.bitcoin = window['bitcoinjs-lib'];
+    }
+
     async function testBitcoinJS() {
       const out = document.getElementById("output");
       out.textContent = "⏳ Checking bitcoinjs-lib...";
 
       try {
-        if (typeof bitcoin === "undefined") {
-          throw new Error("❌ window.bitcoin is undefined");
-        }
-        if (!bitcoin.Psbt) {
-          throw new Error("❌ bitcoin.Psbt is missing");
-        }
-        if (!bitcoin.networks?.bitcoin) {
-          throw new Error("❌ bitcoin.networks.bitcoin is missing");
-        }
+        if (!window.bitcoin) throw new Error("window.bitcoin is undefined");
+        if (!bitcoin.Psbt) throw new Error("bitcoin.Psbt is missing");
+        if (!bitcoin.networks?.bitcoin) throw new Error("bitcoin.networks.bitcoin is missing");
 
         const psbt = new bitcoin.Psbt({ network: bitcoin.networks.bitcoin });
         out.textContent = "✅ BitcoinJS v5.2.0 Loaded.\n\n" + psbt.toString();
