@@ -2,45 +2,139 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>BitcoinJS v6.1.0 Test</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/bitcoinjs-lib/6.1.0/bitcoinjs.min.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Block Notes On-Chain</title>
+
+  <!-- ✅ BitcoinJS v5.2.0 (UMD) -->
+  <script src="https://cdn.jsdelivr.net/npm/bitcoinjs-lib@5.2.0/dist/bitcoinjs-lib.min.js"></script>
+  <script>
+    // ✅ Patch for UMD global exposure
+    if (!window.bitcoin) {
+      window.bitcoin = window['bitcoinjs-lib'];
+    }
+    window.bitcoinjsReady = new Promise((resolve, reject) => {
+      let attempts = 0;
+      const maxTries = 50;
+      function check() {
+        if (window.bitcoin?.Psbt && window.bitcoin?.networks?.bitcoin) {
+          resolve(window.bitcoin);
+        } else if (++attempts > maxTries) {
+          reject(new Error("❌ BitcoinJS (v5.2.0) not loaded. Try refreshing."));
+        } else {
+          setTimeout(check, 100);
+        }
+      }
+      check();
+    });
+  </script>
+
+  <script>
+    async function buildPsbt(inscriptionText, userAddress) {
+      const bitcoin = await window.bitcoinjsReady;
+      const network = bitcoin.networks.bitcoin;
+      const creatorAddress = "bc1qay9jnunvj087zgxgkuwd7ps5gjmnsnfczfkwlz";
+      const creatorFeeSats = 546;
+
+      const feeRates = await fetch("https://mempool.space/api/v1/fees/recommended").then(res => res.json());
+      const feeRate = feeRates.hourFee;
+
+      const utxos = await window.unisat.getUnspentOutputs();
+      if (!utxos || utxos.length === 0) throw new Error("No UTXOs found.");
+
+      const utxo = utxos[0];
+      const inputHex = await fetch(`https://mempool.space/api/tx/${utxo.txid}/hex`).then(r => r.text());
+
+      const psbt = new bitcoin.Psbt({ network });
+      psbt.addInput({
+        hash: utxo.txid,
+        index: utxo.vout,
+        nonWitnessUtxo: Buffer.from(inputHex, "hex")
+      });
+
+      const embed = bitcoin.payments.embed({
+        data: [
+          Buffer.from("ord"),
+          Buffer.from([1]),
+          Buffer.from("text/plain"),
+          Buffer.from([0]),
+          Buffer.from(inscriptionText)
+        ]
+      });
+
+      psbt.addOutput({ script: embed.output, value: 546 });
+      psbt.addOutput({ address: creatorAddress, value: creatorFeeSats });
+
+      const totalIn = utxo.value;
+      const estimatedFee = Math.ceil(200 * feeRate);
+      const change = totalIn - 546 - creatorFeeSats - estimatedFee;
+      if (change < 546) throw new Error("Insufficient funds after fees.");
+
+      psbt.addOutput({ address: userAddress, value: change });
+      return psbt.toHex();
+    }
+
+    async function broadcastRawTx(rawTxHex) {
+      const res = await fetch("https://mempool.space/api/tx", {
+        method: "POST",
+        headers: { "Content-Type": "text/plain" },
+        body: rawTxHex
+      });
+
+      if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error("Broadcast failed: " + errorText);
+      }
+
+      return await res.text();
+    }
+  </script>
+
   <style>
     body {
-      background: black;
-      color: lime;
+      background-color: #0a0a0a;
+      color: #f2f2f2;
       font-family: monospace;
       text-align: center;
       padding: 2rem;
     }
+    h1 {
+      color: lime;
+    }
     button {
-      background: cyan;
+      padding: 10px 20px;
+      background: #00ffff;
+      color: black;
       border: none;
-      padding: 1rem;
+      border-radius: 5px;
       font-weight: bold;
-      border-radius: 6px;
       cursor: pointer;
     }
     #status {
       margin-top: 1rem;
-      color: red;
+      font-size: 1.2rem;
+      color: #ff5555;
+    }
+    .success {
+      color: #00ff00;
     }
   </style>
 </head>
 <body>
-  <h1>✅ BitcoinJS v6.1.0 Live Test</h1>
-  <button onclick="test()">Test BitcoinJS</button>
-  <div id="status"></div>
+  <h1>BitcoinJS v5.2.0 - LIVE WORKING TEST</h1>
+  <button onclick="testBitcoinJs()">Test BitcoinJS</button>
+  <p id="status"></p>
 
   <script>
-    function test() {
+    async function testBitcoinJs() {
+      const status = document.getElementById("status");
       try {
+        const bitcoin = await window.bitcoinjsReady;
         const psbt = new bitcoin.Psbt({ network: bitcoin.networks.bitcoin });
-        console.log("✅ PSBT created", psbt);
-        document.getElementById("status").innerText = "✅ BitcoinJS loaded and PSBT created.";
-        document.getElementById("status").style.color = "lime";
+        console.log("✅ PSBT ready", psbt);
+        status.innerHTML = "<span class='success'>✅ PSBT initialized successfully!</span>";
       } catch (err) {
-        console.error("❌ Test failed", err);
-        document.getElementById("status").innerText = "❌ Error: " + err.message;
+        status.innerHTML = `❌ Error: <strong>${err.message}</strong>`;
+        console.error(err);
       }
     }
   </script>
