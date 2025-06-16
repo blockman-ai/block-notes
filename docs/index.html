@@ -5,10 +5,10 @@
   <meta name="viewport" content="width=device-width,initial-scale=1.0" />
   <title>Block Notes — Inscribe on Bitcoin</title>
 
-  <!-- ✅ BitcoinJS v6 with fallback global reference -->
+  <!-- ✅ BitcoinJS v6.0.0 -->
   <script src="https://cdn.jsdelivr.net/npm/bitcoinjs-lib@6.0.0/dist/bitcoinjs-lib.min.js"></script>
   <script>
-    window.bitcoinjsLib = window.bitcoinjsLib || window.bitcoin;
+    window.bitcoinjsLib = window.bitcoinjs;
   </script>
 
   <!-- ✅ Buffer polyfill -->
@@ -35,7 +35,7 @@
       background: linear-gradient(90deg, #00ffff, #ff00ff);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
-      margin-bottom: 0.5rem;
+      margin-bottom: .5rem;
     }
     .subtitle {
       font-family: 'Orbitron', sans-serif;
@@ -52,7 +52,7 @@
       width: 100%;
       max-width: 500px;
       box-shadow: 0 0 25px rgba(0, 255, 255, 0.2);
-      transition: all 0.3s ease;
+      transition: all .3s ease;
     }
     .card:hover {
       box-shadow: 0 0 30px rgba(255, 0, 255, 0.4);
@@ -63,8 +63,8 @@
       margin-top: 1rem;
       background: #141414;
       border: none;
-      border-radius: 0.75rem;
-      padding: 0.75rem 1rem;
+      border-radius: .75rem;
+      padding: .75rem 1rem;
       color: #fff;
       font-size: 1rem;
     }
@@ -79,11 +79,11 @@
       font-family: 'Orbitron', sans-serif;
       font-weight: 700;
       font-size: 1rem;
-      padding: 0.75rem 1rem;
+      padding: .75rem 1rem;
       border: none;
-      border-radius: 0.75rem;
+      border-radius: .75rem;
       cursor: pointer;
-      transition: all 0.2s ease-in-out;
+      transition: all .2s ease-in-out;
     }
     button:hover {
       transform: scale(1.05);
@@ -91,12 +91,12 @@
     }
     #status {
       margin-top: 1rem;
-      font-size: 0.95rem;
+      font-size: .95rem;
       color: #ff0080;
     }
     .footer {
       margin-top: 3rem;
-      font-size: 0.85rem;
+      font-size: .85rem;
       color: #555;
     }
     @media screen and (max-width:600px) {
@@ -154,17 +154,12 @@
         return;
       }
 
-      if (!window.bitcoinjsLib) {
-        statusEl.innerText = "❌ BitcoinJS library failed to load.";
-        return;
-      }
-
-      const bitcoin = window.bitcoinjsLib;
-      const network = bitcoin.networks.bitcoin;
       const content = `text block-note:${b} "${m}" – @${h} #blocknotes`;
       statusEl.innerText = "⏳ Creating inscription...";
 
       try {
+        const bitcoin = window.bitcoinjsLib;
+        const network = bitcoin.networks.bitcoin;
         const creatorAddress = "bc1qay9jnunvj087zgxgkuwd7ps5gjmnsnfczfkwlz";
         const creatorFeeSats = 546;
 
@@ -199,18 +194,14 @@
         const totalIn = utxo.value;
         const estimatedFee = Math.ceil(200 * feeRate);
         const change = totalIn - 546 - creatorFeeSats - estimatedFee;
+
         if (change < 546) throw new Error("Insufficient funds after fees");
         psbt.addOutput({ address: address, value: change });
 
         const signed = await window.unisat.signPsbt(psbt.toBase64());
         const tx = bitcoin.Psbt.fromBase64(signed).extractTransaction();
         const rawTx = tx.toHex();
-
-        const txid = await fetch("https://mempool.space/api/tx", {
-          method: "POST",
-          headers: { "Content-Type": "text/plain" },
-          body: rawTx
-        }).then(res => res.text());
+        const txid = await broadcastRawTx(rawTx);
 
         statusEl.innerHTML = `✅ Inscribed! <a href="https://mempool.space/tx/${txid}" target="_blank">${txid}</a>`;
       } catch (e) {
@@ -218,6 +209,16 @@
         statusEl.innerText = "❌ " + (e.message || e);
       }
     }
+
+    const broadcastRawTx = async hex => {
+      const res = await fetch("https://mempool.space/api/tx", {
+        method: "POST",
+        headers: { "Content-Type": "text/plain" },
+        body: hex
+      });
+      if (!res.ok) throw new Error(await res.text());
+      return await res.text();
+    };
   </script>
 </body>
 </html>
