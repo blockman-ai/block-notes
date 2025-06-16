@@ -5,13 +5,13 @@
   <meta name="viewport" content="width=device-width,initial-scale=1.0" />
   <title>Block Notes — Inscribe on Bitcoin</title>
 
-  <!-- ✅ Load BitcoinJS v6.0.0 with proper global exposure -->
+  <!-- ✅ BitcoinJS v6 with fallback global reference -->
   <script src="https://cdn.jsdelivr.net/npm/bitcoinjs-lib@6.0.0/dist/bitcoinjs-lib.min.js"></script>
   <script>
-    window.bitcoinjsLib = window.bitcoinjs; // Ensure global exposure
+    window.bitcoinjsLib = window.bitcoinjsLib || window.bitcoin;
   </script>
 
-  <!-- ✅ Buffer polyfill for browser compatibility -->
+  <!-- ✅ Buffer polyfill -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/buffer/6.0.3/buffer.min.js"></script>
   <script>
     window.Buffer = buffer.Buffer;
@@ -20,66 +20,89 @@
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
   <style>
     body {
-      margin: 0; font-family:'Inter',sans-serif;
-      background:linear-gradient(145deg,#050505,#0f0f0f);
-      color:#f0f0f0; display:flex;flex-direction:column;
-      align-items:center;padding:2rem;
+      margin: 0;
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(145deg, #050505, #0f0f0f);
+      color: #f0f0f0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2rem;
     }
     h1 {
-      font-family:'Orbitron',sans-serif;
-      font-size:2.8rem;
-      background:linear-gradient(90deg,#00ffff,#ff00ff);
-      -webkit-background-clip:text;
-      -webkit-text-fill-color:transparent;
-      margin-bottom:.5rem;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 2.8rem;
+      background: linear-gradient(90deg, #00ffff, #ff00ff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 0.5rem;
     }
     .subtitle {
-      font-family:'Orbitron',sans-serif;
-      font-size:1.2rem;color:#888;margin-bottom:2rem;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.2rem;
+      color: #888;
+      margin-bottom: 2rem;
     }
     .card {
-      background:rgba(255,255,255,0.05);
-      border:1px solid #222;
-      border-radius:1.25rem;
-      padding:2rem;margin-bottom:2rem;
-      width:100%;max-width:500px;
-      box-shadow:0 0 25px rgba(0,255,255,0.2);
-      transition:all .3s ease;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid #222;
+      border-radius: 1.25rem;
+      padding: 2rem;
+      margin-bottom: 2rem;
+      width: 100%;
+      max-width: 500px;
+      box-shadow: 0 0 25px rgba(0, 255, 255, 0.2);
+      transition: all 0.3s ease;
     }
-    .card:hover {box-shadow:0 0 30px rgba(255,0,255,0.4);}
-    label,input,textarea {
-      display:block;width:100%;
-      margin-top:1rem;background:#141414;
-      border:none;border-radius:.75rem;
-      padding:.75rem 1rem;color:#fff;
-      font-size:1rem;
+    .card:hover {
+      box-shadow: 0 0 30px rgba(255, 0, 255, 0.4);
     }
-    input::placeholder,textarea::placeholder {
-      color:#777;
+    label, input, textarea {
+      display: block;
+      width: 100%;
+      margin-top: 1rem;
+      background: #141414;
+      border: none;
+      border-radius: 0.75rem;
+      padding: 0.75rem 1rem;
+      color: #fff;
+      font-size: 1rem;
+    }
+    input::placeholder, textarea::placeholder {
+      color: #777;
     }
     button {
-      width:100%;margin-top:1.5rem;
-      background:linear-gradient(90deg,#00ffcc,#6600ff);
-      color:#000;font-family:'Orbitron',sans-serif;
-      font-weight:700;font-size:1rem;
-      padding:.75rem 1rem;border:none;
-      border-radius:.75rem;cursor:pointer;
-      transition:all .2s ease-in-out;
+      width: 100%;
+      margin-top: 1.5rem;
+      background: linear-gradient(90deg, #00ffcc, #6600ff);
+      color: #000;
+      font-family: 'Orbitron', sans-serif;
+      font-weight: 700;
+      font-size: 1rem;
+      padding: 0.75rem 1rem;
+      border: none;
+      border-radius: 0.75rem;
+      cursor: pointer;
+      transition: all 0.2s ease-in-out;
     }
     button:hover {
-      transform:scale(1.05);
-      box-shadow:0 0 10px #00ffff;
+      transform: scale(1.05);
+      box-shadow: 0 0 10px #00ffff;
     }
     #status {
-      margin-top:1rem;font-size:.95rem;color:#ff0080;
+      margin-top: 1rem;
+      font-size: 0.95rem;
+      color: #ff0080;
     }
     .footer {
-      margin-top:3rem;font-size:.85rem;color:#555;
+      margin-top: 3rem;
+      font-size: 0.85rem;
+      color: #555;
     }
     @media screen and (max-width:600px) {
-      h1 {font-size:2rem;}
-      .subtitle {font-size:1rem;}
-      .card {padding:1.5rem;}
+      h1 { font-size: 2rem; }
+      .subtitle { font-size: 1rem; }
+      .card { padding: 1.5rem; }
     }
   </style>
 </head>
@@ -131,26 +154,28 @@
         return;
       }
 
+      if (!window.bitcoinjsLib) {
+        statusEl.innerText = "❌ BitcoinJS library failed to load.";
+        return;
+      }
+
+      const bitcoin = window.bitcoinjsLib;
+      const network = bitcoin.networks.bitcoin;
       const content = `text block-note:${b} "${m}" – @${h} #blocknotes`;
       statusEl.innerText = "⏳ Creating inscription...";
 
       try {
-        const bitcoin = window.bitcoinjsLib;
-        const network = bitcoin.networks.bitcoin;
-        const creatorAddress = "bc1qay9jnunvj087zgxgkuwd7ps5gjmnsnfczfkwlz"; // Example creator address
+        const creatorAddress = "bc1qay9jnunvj087zgxgkuwd7ps5gjmnsnfczfkwlz";
         const creatorFeeSats = 546;
 
-        // Fetch fee rate
         const feeRates = await fetch("https://mempool.space/api/v1/fees/recommended").then(res => res.json());
         const feeRate = feeRates.hourFee;
 
-        // Get UTXOs from UniSat
         const utxos = await window.unisat.getUnspentOutputs();
         if (!utxos?.length) throw new Error("No UTXOs found.");
         const utxo = utxos[0];
         const inputHex = await fetch(`https://mempool.space/api/tx/${utxo.txid}/hex`).then(r => r.text());
 
-        // Create PSBT
         const psbt = new bitcoin.Psbt({ network });
         psbt.addInput({
           hash: utxo.txid,
@@ -158,7 +183,6 @@
           nonWitnessUtxo: Buffer.from(inputHex, "hex")
         });
 
-        // Embed inscription data
         const embed = bitcoin.payments.embed({
           data: [
             Buffer.from("ord"),
@@ -169,22 +193,24 @@
           ]
         });
 
-        psbt.addOutput({ script: embed.output, value: 546 }); // Inscription output
-        psbt.addOutput({ address: creatorAddress, value: creatorFeeSats }); // Creator fee
+        psbt.addOutput({ script: embed.output, value: 546 });
+        psbt.addOutput({ address: creatorAddress, value: creatorFeeSats });
 
-        // Calculate change
         const totalIn = utxo.value;
-        const estimatedFee = Math.ceil(200 * feeRate); // Rough estimate, adjust based on size
+        const estimatedFee = Math.ceil(200 * feeRate);
         const change = totalIn - 546 - creatorFeeSats - estimatedFee;
-
         if (change < 546) throw new Error("Insufficient funds after fees");
         psbt.addOutput({ address: address, value: change });
 
-        // Sign and broadcast
         const signed = await window.unisat.signPsbt(psbt.toBase64());
         const tx = bitcoin.Psbt.fromBase64(signed).extractTransaction();
         const rawTx = tx.toHex();
-        const txid = await broadcastRawTx(rawTx);
+
+        const txid = await fetch("https://mempool.space/api/tx", {
+          method: "POST",
+          headers: { "Content-Type": "text/plain" },
+          body: rawTx
+        }).then(res => res.text());
 
         statusEl.innerHTML = `✅ Inscribed! <a href="https://mempool.space/tx/${txid}" target="_blank">${txid}</a>`;
       } catch (e) {
@@ -192,16 +218,6 @@
         statusEl.innerText = "❌ " + (e.message || e);
       }
     }
-
-    const broadcastRawTx = async hex => {
-      const res = await fetch("https://mempool.space/api/tx", {
-        method: "POST",
-        headers: { "Content-Type": "text/plain" },
-        body: hex
-      });
-      if (!res.ok) throw new Error(await res.text());
-      return await res.text();
-    };
   </script>
 </body>
 </html>
