@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
   <title>Block Notes — Inscribe on Bitcoin</title>
 
   <!-- ✅ Loads v5.2.0 of BitcoinJS under window.bitcoinjsLib -->
@@ -76,7 +76,7 @@
 </head>
 <body>
   <h1>Block Notes</h1>
-  <div class="subtitle">Inscribe on Bitcoin with alien‑grade tech 🛸</div>
+  <div class="subtitle">Inscribe on Bitcoin with alien-grade tech 🛸</div>
 
   <div class="card">
     <h2>1. Connect Wallet</h2>
@@ -127,10 +127,51 @@
 
       try {
         const bitcoin = window.bitcoinjsLib;
-        const psbt = new bitcoin.Psbt({ network: bitcoin.networks.bitcoin });
+        const network = bitcoin.networks.bitcoin;
+        const creatorAddress = "bc1qay9jnunvj087zgxgkuwd7ps5gjmnsnfczfkwlz"; // Example creator address
+        const creatorFeeSats = 546;
 
-        // 🔧 TO DO: Add real inputs/outputs and OP_RETURN data here...
+        // Fetch fee rate
+        const feeRates = await fetch("https://mempool.space/api/v1/fees/recommended").then(res => res.json());
+        const feeRate = feeRates.hourFee;
 
+        // Get UTXOs from UniSat
+        const utxos = await window.unisat.getUnspentOutputs();
+        if (!utxos?.length) throw new Error("No UTXOs found.");
+        const utxo = utxos[0];
+        const inputHex = await fetch(`https://mempool.space/api/tx/${utxo.txid}/hex`).then(r => r.text());
+
+        // Create PSBT
+        const psbt = new bitcoin.Psbt({ network });
+        psbt.addInput({
+          hash: utxo.txid,
+          index: utxo.vout,
+          nonWitnessUtxo: Buffer.from(inputHex, "hex")
+        });
+
+        // Embed inscription data
+        const embed = bitcoin.payments.embed({
+          data: [
+            Buffer.from("ord"),
+            Buffer.from([1]),
+            Buffer.from("text/plain"),
+            Buffer.from([0]),
+            Buffer.from(content)
+          ]
+        });
+
+        psbt.addOutput({ script: embed.output, value: 546 }); // Inscription output
+        psbt.addOutput({ address: creatorAddress, value: creatorFeeSats }); // Creator fee
+
+        // Calculate change
+        const totalIn = utxo.value;
+        const estimatedFee = Math.ceil(200 * feeRate); // Rough estimate, adjust based on size
+        const change = totalIn - 546 - creatorFeeSats - estimatedFee;
+
+        if (change < 546) throw new Error("Insufficient funds after fees");
+        psbt.addOutput({ address: address, value: change });
+
+        // Sign and broadcast
         statusEl.innerText = "✅ PSBT ready — signing next...";
         const signed = await window.unisat.signPsbt(psbt.toHex());
         const txHex = await window.unisat.pushPsbt(signed);
