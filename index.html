@@ -180,9 +180,8 @@
         if (change < 546) throw new Error("Insufficient funds after fees");
         psbt.addOutput({ address: address, value: change });
 
-        // Sign and broadcast with v6.0.0 fix
-        statusEl.innerText = "✅ PSBT ready — signing next...";
-        const signed = await window.unisat.signPsbt(psbt.toBase64()); // Use base64
+        // Sign and broadcast
+        const signed = await window.unisat.signPsbt(psbt.toBase64());
         const tx = bitcoin.Psbt.fromBase64(signed).extractTransaction();
         const rawTx = tx.toHex();
         const txid = await broadcastRawTx(rawTx);
