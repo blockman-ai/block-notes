@@ -5,8 +5,17 @@
   <meta name="viewport" content="width=device-width,initial-scale=1.0" />
   <title>Block Notes — Inscribe on Bitcoin</title>
 
-  <!-- ✅ Loads v5.2.0 of BitcoinJS under window.bitcoinjsLib -->
-  <script src="https://unpkg.com/bitcoinjs-lib@5.2.0/dist/bitcoinjs.min.js"></script>
+  <!-- ✅ Load BitcoinJS v6.0.0 with proper global exposure -->
+  <script src="https://cdn.jsdelivr.net/npm/bitcoinjs-lib@6.0.0/dist/bitcoinjs-lib.min.js"></script>
+  <script>
+    window.bitcoinjsLib = window.bitcoinjs; // Ensure global exposure
+  </script>
+
+  <!-- ✅ Buffer polyfill for browser compatibility -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/buffer/6.0.3/buffer.min.js"></script>
+  <script>
+    window.Buffer = buffer.Buffer;
+  </script>
 
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
   <style>
@@ -171,11 +180,12 @@
         if (change < 546) throw new Error("Insufficient funds after fees");
         psbt.addOutput({ address: address, value: change });
 
-        // Sign and broadcast
+        // Sign and broadcast with v6.0.0 fix
         statusEl.innerText = "✅ PSBT ready — signing next...";
-        const signed = await window.unisat.signPsbt(psbt.toHex());
-        const txHex = await window.unisat.pushPsbt(signed);
-        const txid = await broadcastRawTx(txHex);
+        const signed = await window.unisat.signPsbt(psbt.toBase64()); // Use base64
+        const tx = bitcoin.Psbt.fromBase64(signed).extractTransaction();
+        const rawTx = tx.toHex();
+        const txid = await broadcastRawTx(rawTx);
 
         statusEl.innerHTML = `✅ Inscribed! <a href="https://mempool.space/tx/${txid}" target="_blank">${txid}</a>`;
       } catch (e) {
