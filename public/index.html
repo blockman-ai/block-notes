@@ -5,10 +5,10 @@
   <meta name="viewport" content="width=device-width,initial-scale=1.0" />
   <title>Block Notes — Inscribe on Bitcoin</title>
 
-  <!-- ✅ BitcoinJS v6 + Global Exposure -->
+  <!-- ✅ BitcoinJS v6 with fallback global reference -->
   <script src="https://cdn.jsdelivr.net/npm/bitcoinjs-lib@6.0.0/dist/bitcoinjs-lib.min.js"></script>
   <script>
-    window.bitcoinjsLib = window.bitcoinjsLib || bitcoinjs;
+    window.bitcoinjsLib = window.bitcoinjsLib || window.bitcoin;
   </script>
 
   <!-- ✅ Buffer polyfill -->
@@ -155,13 +155,12 @@
       }
 
       if (!window.bitcoinjsLib) {
-        statusEl.innerText = "❌ BitcoinJS failed to load.";
+        statusEl.innerText = "❌ BitcoinJS library failed to load.";
         return;
       }
 
       const bitcoin = window.bitcoinjsLib;
       const network = bitcoin.networks.bitcoin;
-
       const content = `text block-note:${b} "${m}" – @${h} #blocknotes`;
       statusEl.innerText = "⏳ Creating inscription...";
 
